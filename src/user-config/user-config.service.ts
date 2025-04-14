@@ -1,26 +1,54 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserConfigDto } from './dto/create-user-config.dto';
-import { UpdateUserConfigDto } from './dto/update-user-config.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserConfig } from './entities/user-config.entity';
+import { InterfaceLanguage } from './enums/interface-language.enum';
+import { Theme } from './enums/theme.enum';
 
 @Injectable()
 export class UserConfigService {
-  create(createUserConfigDto: CreateUserConfigDto) {
-    return 'This action adds a new userConfig';
-  }
+    constructor(
+        @InjectRepository(UserConfig)
+        private readonly userConfigRepository: Repository<UserConfig>
+    ) {}
 
-  findAll() {
-    return `This action returns all userConfig`;
-  }
+    async findOne(userId: string): Promise<UserConfig> {
+        const config = await this.userConfigRepository.findOne({
+            where: { userId },
+        });
+        if (!config) throw new NotFoundException('UserConfig not found');
+        return config;
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userConfig`;
-  }
+    async updateLanguage(
+        userId: string,
+        language: InterfaceLanguage
+    ): Promise<UserConfig> {
+        const config = await this.findOne(userId);
+        config.interfaceLanguage = language;
+        return this.userConfigRepository.save(config);
+    }
 
-  update(id: number, updateUserConfigDto: UpdateUserConfigDto) {
-    return `This action updates a #${id} userConfig`;
-  }
+    async updateTheme(userId: string, theme: Theme): Promise<UserConfig> {
+        const config = await this.findOne(userId);
+        config.theme = theme;
+        return this.userConfigRepository.save(config);
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} userConfig`;
-  }
+    async updateNickname(
+        userId: string,
+        nickname: string
+    ): Promise<UserConfig> {
+        const config = await this.findOne(userId);
+        config.nickname = nickname;
+        return this.userConfigRepository.save(config);
+    }
+
+    async createDefaultConfig(
+        userId: string,
+        nickname: string
+    ): Promise<UserConfig> {
+        const config = this.userConfigRepository.create({ userId, nickname });
+        return this.userConfigRepository.save(config);
+    }
 }

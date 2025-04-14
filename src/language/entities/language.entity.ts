@@ -1,24 +1,13 @@
-import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
-import { UserLearningLanguage } from 'src/user-learning-language/entities/user-learning-language.entity';
-import { UserVocabulary } from 'src/user-vocabulary/entities/user-vocabulary.entity';
+import { Entity, PrimaryColumn, Column } from 'typeorm';
 
 @Entity()
 export class Language {
     @PrimaryColumn()
-    languageName: string;
+    id: string;
+
+    @Column()
+    name: string;
 
     @Column()
     flag: string;
-
-    @OneToMany(
-        () => UserLearningLanguage,
-        (learningLang) => learningLang.language
-    )
-    learners: UserLearningLanguage[];
-
-    @OneToMany(() => UserVocabulary, (vocab) => vocab.sourceLanguage)
-    vocabulariesFrom: UserVocabulary[];
-
-    @OneToMany(() => UserVocabulary, (vocab) => vocab.targetLanguage)
-    vocabulariesTo: UserVocabulary[];
 }

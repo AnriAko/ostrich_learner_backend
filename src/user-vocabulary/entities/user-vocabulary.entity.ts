@@ -1,22 +1,33 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    ManyToOne,
+    OneToMany,
+    Unique,
+} from 'typeorm';
+import { User } from 'src/user/entities/user.entity';
 import { Language } from 'src/language/entities/language.entity';
-import { UserLearningLanguage } from 'src/user-learning-language/entities/user-learning-language.entity';
-import { Word } from 'src/word/entities/word.entity';
+import { UserVocabularyWord } from 'src/user-vocabulary-words/entities/user-vocabulary-word.entity';
 
 @Entity()
+@Unique(['user', 'sourceLanguage', 'targetLanguage'])
 export class UserVocabulary {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Language, (lang) => lang.vocabulariesFrom)
+    @ManyToOne(() => User, (user) => user.vocabularies, { onDelete: 'CASCADE' })
+    user: User;
+
+    @ManyToOne(() => Language)
     sourceLanguage: Language;
 
-    @ManyToOne(() => Language, (lang) => lang.vocabulariesTo)
+    @ManyToOne(() => Language)
     targetLanguage: Language;
 
-    @ManyToOne(() => UserLearningLanguage, (ll) => ll.vocabularies)
-    learningLanguage: UserLearningLanguage;
+    @Column()
+    color: string;
 
-    @OneToMany(() => Word, (word) => word.vocabulary)
-    words: Word[];
+    @OneToMany(() => UserVocabularyWord, (word) => word.vocabulary)
+    words: UserVocabularyWord[];
 }

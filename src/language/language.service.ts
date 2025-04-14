@@ -1,26 +1,37 @@
-import { Injectable } from '@nestjs/common';
-import { CreateLanguageDto } from './dto/create-language.dto';
-import { UpdateLanguageDto } from './dto/update-language.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Language } from './entities/language.entity';
 
 @Injectable()
 export class LanguageService {
-  create(createLanguageDto: CreateLanguageDto) {
-    return 'This action adds a new language';
-  }
+    constructor(
+        @InjectRepository(Language)
+        private readonly languageRepository: Repository<Language>
+    ) {}
 
-  findAll() {
-    return `This action returns all language`;
-  }
+    async create(language: Language): Promise<Language> {
+        return this.languageRepository.save(language);
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} language`;
-  }
+    async findAll(): Promise<Language[]> {
+        return this.languageRepository.find();
+    }
 
-  update(id: number, updateLanguageDto: UpdateLanguageDto) {
-    return `This action updates a #${id} language`;
-  }
+    async findOne(id: string): Promise<Language> {
+        const lang = await this.languageRepository.findOne({ where: { id } });
+        if (!lang) throw new NotFoundException('Language not found');
+        return lang;
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} language`;
-  }
+    async update(id: string, data: Partial<Language>): Promise<Language> {
+        const lang = await this.findOne(id);
+        Object.assign(lang, data);
+        return this.languageRepository.save(lang);
+    }
+
+    async remove(id: string): Promise<void> {
+        const lang = await this.findOne(id);
+        await this.languageRepository.remove(lang);
+    }
 }

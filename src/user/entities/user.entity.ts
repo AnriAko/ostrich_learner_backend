@@ -1,26 +1,27 @@
 import {
     Entity,
-    PrimaryGeneratedColumn,
     Column,
+    PrimaryGeneratedColumn,
     OneToOne,
-    JoinColumn,
     OneToMany,
 } from 'typeorm';
 import { UserConfig } from 'src/user-config/entities/user-config.entity';
-import { UserLearningLanguage } from 'src/user-learning-language/entities/user-learning-language.entity';
+import { UserVocabulary } from 'src/user-vocabulary/entities/user-vocabulary.entity';
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @Column({ unique: true })
+    email: string;
 
     @Column()
-    nickname: string;
+    password: string;
 
-    @OneToOne(() => UserConfig, (config) => config.user, { cascade: true })
-    @JoinColumn()
+    @OneToOne(() => UserConfig, (config) => config.user)
     config: UserConfig;
 
-    @OneToMany(() => UserLearningLanguage, (lang) => lang.user)
-    UserLearningLanguage: UserLearningLanguage[];
+    @OneToMany(() => UserVocabulary, (v) => v.user)
+    vocabularies: UserVocabulary[];
 }

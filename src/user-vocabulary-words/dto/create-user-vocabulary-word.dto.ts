@@ -1,1 +1,4 @@
-export class CreateUserVocabularyWordDto {}
+export class CreateUserVocabularyWordDto {
+    word: string;
+    translate: string;
+}

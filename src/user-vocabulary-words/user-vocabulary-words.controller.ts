@@ -1,34 +1,57 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { UserVocabularyWordsService } from './user-vocabulary-words.service';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    ParseIntPipe,
+} from '@nestjs/common';
+import { UserVocabularyWordService } from './user-vocabulary-words.service';
 import { CreateUserVocabularyWordDto } from './dto/create-user-vocabulary-word.dto';
 import { UpdateUserVocabularyWordDto } from './dto/update-user-vocabulary-word.dto';
 
-@Controller('user-vocabulary-words')
-export class UserVocabularyWordsController {
-  constructor(private readonly userVocabularyWordsService: UserVocabularyWordsService) {}
+@Controller('vocabularies/:vocabularyId/words')
+export class UserVocabularyWordController {
+    constructor(private readonly wordService: UserVocabularyWordService) {}
 
-  @Post()
-  create(@Body() createUserVocabularyWordDto: CreateUserVocabularyWordDto) {
-    return this.userVocabularyWordsService.create(createUserVocabularyWordDto);
-  }
+    @Post()
+    create(
+        @Param('vocabularyId', ParseIntPipe) vocabularyId: number,
+        @Body() createDto: CreateUserVocabularyWordDto
+    ) {
+        return this.wordService.create(vocabularyId, createDto);
+    }
 
-  @Get()
-  findAll() {
-    return this.userVocabularyWordsService.findAll();
-  }
+    @Get()
+    findAll() {
+        return this.wordService.findAll();
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userVocabularyWordsService.findOne(+id);
-  }
+    @Get(':id')
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.wordService.findOne(id);
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserVocabularyWordDto: UpdateUserVocabularyWordDto) {
-    return this.userVocabularyWordsService.update(+id, updateUserVocabularyWordDto);
-  }
+    @Patch(':id')
+    update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() updateDto: UpdateUserVocabularyWordDto
+    ) {
+        return this.wordService.update(id, updateDto);
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userVocabularyWordsService.remove(+id);
-  }
+    @Delete(':id')
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.wordService.remove(id);
+    }
+
+    @Post(':id/test')
+    testAnswer(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('answer') answer: string
+    ) {
+        return this.wordService.testAnswer(id, answer);
+    }
 }
