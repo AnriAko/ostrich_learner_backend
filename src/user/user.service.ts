@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserConfigService } from 'src/user-config/user-config.service';
 
+// Possibly change later
 @Injectable()
 export class UserService {
     constructor(
@@ -15,11 +16,7 @@ export class UserService {
     ) {}
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        const user = this.userRepository.create({
-            email: createUserDto.email,
-            password: createUserDto.password,
-        });
-
+        const user = this.userRepository.create();
         const savedUser = await this.userRepository.save(user);
 
         await this.userConfigService.createDefaultConfig(
@@ -40,11 +37,11 @@ export class UserService {
         return user;
     }
 
-    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const user = await this.findOne(id);
-        Object.assign(user, updateUserDto);
-        return this.userRepository.save(user);
-    }
+    // async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    //     const user = await this.findOne(id);
+    //     Object.assign(user, updateUserDto);
+    //     return this.userRepository.save(user);
+    // }
 
     async remove(id: string): Promise<void> {
         await this.findOne(id);

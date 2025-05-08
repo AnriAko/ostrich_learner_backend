@@ -13,11 +13,11 @@ export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ unique: true })
-    email: string;
+    // @Column({ unique: true })
+    // email: string;
 
-    @Column()
-    password: string;
+    // @Column()
+    // password: string;
 
     @OneToOne(() => UserConfig, (config) => config.user)
     config: UserConfig;
