@@ -12,8 +12,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 //change it later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@ApiTags('Users')
-@Controller('users')
+@ApiTags('User')
+@Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
@@ -25,6 +25,7 @@ export class UserController {
     @ApiResponse({ status: 400, description: 'Invalid data provided.' })
     @Post()
     create(@Body() createUserDto: CreateUserDto) {
+        console.log(createUserDto);
         return this.userService.create(createUserDto);
     }
 

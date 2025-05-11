@@ -1,6 +1,6 @@
-import { Controller, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Patch, Param, Body, Get } from '@nestjs/common';
 import { UserConfigService } from './user-config.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { InterfaceLanguage } from './enums/interface-language.enum';
 import { Theme } from './enums/theme.enum';
 
@@ -8,6 +8,17 @@ import { Theme } from './enums/theme.enum';
 @Controller('user-config')
 export class UserConfigController {
     constructor(private readonly userConfigService: UserConfigService) {}
+    @ApiOperation({ summary: 'Get user config by user ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'User config returned successfully.',
+    })
+    @ApiResponse({ status: 404, description: 'UserConfig not found.' })
+    @ApiParam({ name: 'userId', type: 'string' })
+    @Get(':userId')
+    getUserConfig(@Param('userId') userId: string) {
+        return this.userConfigService.findOne(userId);
+    }
 
     @ApiOperation({ summary: 'Update the nickname of a user' })
     @ApiResponse({ status: 200, description: 'Nickname updated successfully.' })
