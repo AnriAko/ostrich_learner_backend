@@ -11,6 +11,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FullUserProfileDto } from './dto/full-user-profile.dto';
 //change it later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @ApiTags('User')
 @Controller('user')
@@ -25,7 +26,6 @@ export class UserController {
     @ApiResponse({ status: 400, description: 'Invalid data provided.' })
     @Post()
     create(@Body() createUserDto: CreateUserDto) {
-        console.log(createUserDto);
         return this.userService.create(createUserDto);
     }
 
@@ -42,6 +42,14 @@ export class UserController {
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.userService.findOne(id);
+    }
+
+    @ApiOperation({ summary: 'Get full user profile by ID' })
+    @ApiResponse({ status: 200, type: FullUserProfileDto })
+    @ApiResponse({ status: 404, description: 'User not found' })
+    @Get('profile/:id')
+    getProfile(@Param('id') id: string): Promise<FullUserProfileDto> {
+        return this.userService.getFullProfileById(id);
     }
 
     // @ApiOperation({ summary: 'Update user data' })
