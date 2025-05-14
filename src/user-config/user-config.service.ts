@@ -22,10 +22,10 @@ export class UserConfigService {
 
     async updateLanguage(
         userId: string,
-        language: InterfaceLanguage
+        interfaceLanguage: InterfaceLanguage
     ): Promise<UserConfig> {
         const config = await this.findOne(userId);
-        config.interfaceLanguage = language;
+        config.interfaceLanguage = interfaceLanguage;
         return this.userConfigRepository.save(config);
     }
 

@@ -37,9 +37,9 @@ export class UserConfigController {
     @Patch(':userId/interface-language')
     updateLanguage(
         @Param('userId') userId: string,
-        @Body('language') language: InterfaceLanguage
+        @Body('interfaceLanguage') interfaceLanguage: InterfaceLanguage
     ) {
-        return this.userConfigService.updateLanguage(userId, language);
+        return this.userConfigService.updateLanguage(userId, interfaceLanguage);
     }
 
     @ApiOperation({ summary: 'Update the theme of a user' })
