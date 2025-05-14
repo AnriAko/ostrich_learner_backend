@@ -34,7 +34,7 @@ export class UserConfigController {
     @ApiOperation({ summary: 'Update the language of a user' })
     @ApiResponse({ status: 200, description: 'Language updated successfully.' })
     @ApiResponse({ status: 404, description: 'UserConfig not found.' })
-    @Patch(':userId/language')
+    @Patch(':userId/interface-language')
     updateLanguage(
         @Param('userId') userId: string,
         @Body('language') language: InterfaceLanguage
