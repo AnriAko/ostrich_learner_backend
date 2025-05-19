@@ -20,9 +20,11 @@ export class UserService {
         const user = this.userRepository.create();
         const savedUser = await this.userRepository.save(user);
 
-        await this.userConfigService.createDefaultConfig(
+        await this.userConfigService.createUserConfig(
             savedUser.id,
-            createUserDto.nickname
+            createUserDto.nickname,
+            createUserDto.theme,
+            createUserDto.interfaceLanguage
         );
 
         return savedUser;

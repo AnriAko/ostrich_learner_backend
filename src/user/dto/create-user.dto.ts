@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsEmail, IsEnum } from 'class-validator';
+import { InterfaceLanguage } from 'src/user-config/enums/interface-language.enum';
+import { Theme } from 'src/user-config/enums/theme.enum';
 
 export class CreateUserDto {
     // @ApiProperty({
@@ -23,4 +25,20 @@ export class CreateUserDto {
     })
     @IsNotEmpty()
     nickname: string;
+
+    @ApiProperty({
+        description: 'The language preference for the user interface',
+        enum: InterfaceLanguage,
+        default: InterfaceLanguage.English,
+    })
+    @IsEnum(InterfaceLanguage)
+    interfaceLanguage: InterfaceLanguage;
+
+    @ApiProperty({
+        description: 'The theme preference for the user',
+        enum: Theme,
+        default: Theme.Light,
+    })
+    @IsEnum(Theme)
+    theme: Theme;
 }

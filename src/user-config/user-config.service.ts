@@ -44,11 +44,18 @@ export class UserConfigService {
         return this.userConfigRepository.save(config);
     }
 
-    async createDefaultConfig(
+    async createUserConfig(
         userId: string,
-        nickname: string
+        nickname: string,
+        theme: Theme,
+        interfaceLanguage: InterfaceLanguage
     ): Promise<UserConfig> {
-        const config = this.userConfigRepository.create({ userId, nickname });
+        const config = this.userConfigRepository.create({
+            userId,
+            nickname,
+            theme,
+            interfaceLanguage,
+        });
         return this.userConfigRepository.save(config);
     }
 }
