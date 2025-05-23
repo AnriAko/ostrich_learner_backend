@@ -1,5 +1,5 @@
 export enum InterfaceLanguage {
-    English = 'EN',
-    Georgian = 'KA',
-    Russian = 'RU',
+    English = 'en',
+    Georgian = 'ka',
+    Russian = 'ru',
 }

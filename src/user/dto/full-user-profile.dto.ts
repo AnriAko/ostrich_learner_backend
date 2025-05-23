@@ -3,5 +3,5 @@ export class FullUserProfileDto {
     id: string;
     nickname: string;
     theme: 'light' | 'dark';
-    interfaceLanguage: 'EN' | 'RU' | 'KA';
+    interfaceLanguage: 'en' | 'ru' | 'ka';
 }
