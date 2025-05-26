@@ -5,24 +5,24 @@ import {
     ManyToOne,
     JoinColumn,
 } from 'typeorm';
-import { UserVocabulary } from '../../user-vocabulary/entities/user-vocabulary.entity';
+import { Vocabulary } from '../../vocabulary/entities/vocabulary.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
-export class UserVocabularyWord {
+export class Word {
     @ApiProperty({ example: 1, description: 'Unique identifier of the word' })
     @PrimaryGeneratedColumn()
     id: number;
 
     @ApiProperty({
-        type: () => UserVocabulary,
+        type: () => Vocabulary,
         description: 'User vocabulary this word belongs to',
     })
-    @ManyToOne(() => UserVocabulary, (vocabulary) => vocabulary.words, {
+    @ManyToOne(() => Vocabulary, (vocabulary) => vocabulary.words, {
         eager: true,
     })
     @JoinColumn({ name: 'vocabularyID' })
-    vocabulary: UserVocabulary;
+    vocabulary: Vocabulary;
 
     @ApiProperty({ example: 'apple', description: 'The word being learned' })
     @Column()

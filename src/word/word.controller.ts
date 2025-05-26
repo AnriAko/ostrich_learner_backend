@@ -8,29 +8,21 @@ import {
     Delete,
     ParseIntPipe,
 } from '@nestjs/common';
-import { UserVocabularyWordService } from './user-vocabulary-words.service';
-import { CreateUserVocabularyWordDto } from './dto/create-user-vocabulary-word.dto';
-import { UpdateUserVocabularyWordDto } from './dto/update-user-vocabulary-word.dto';
+import { WordService } from './word.service';
+import { CreateWordDto } from './dto/create-word.dto';
+import { UpdateWordDto } from './dto/update-word.dto';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Vocabulary Words')
-@Controller('vocabularies/:vocabularyId/words')
-export class UserVocabularyWordController {
-    constructor(private readonly wordService: UserVocabularyWordService) {}
+@Controller('vocabulary-words')
+export class WordController {
+    constructor(private readonly wordService: WordService) {}
 
     @Post()
     @ApiOperation({ summary: 'Create a word in specific vocabulary' })
-    @ApiParam({
-        name: 'vocabularyId',
-        type: Number,
-        description: 'Vocabulary ID',
-    })
-    @ApiBody({ type: CreateUserVocabularyWordDto })
-    create(
-        @Param('vocabularyId', ParseIntPipe) vocabularyId: number,
-        @Body() createDto: CreateUserVocabularyWordDto
-    ) {
-        return this.wordService.create(vocabularyId, createDto);
+    @ApiBody({ type: CreateWordDto })
+    create(@Body() createDto: CreateWordDto) {
+        return this.wordService.create(createDto);
     }
 
     @Get()
@@ -51,7 +43,7 @@ export class UserVocabularyWordController {
     @ApiParam({ name: 'id', type: Number })
     update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateDto: UpdateUserVocabularyWordDto
+        @Body() updateDto: UpdateWordDto
     ) {
         return this.wordService.update(id, updateDto);
     }

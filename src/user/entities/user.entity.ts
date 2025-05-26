@@ -6,7 +6,7 @@ import {
     OneToMany,
 } from 'typeorm';
 import { UserConfig } from 'src/user-config/entities/user-config.entity';
-import { UserVocabulary } from 'src/user-vocabulary/entities/user-vocabulary.entity';
+import { Vocabulary } from 'src/vocabulary/entities/vocabulary.entity';
 
 @Entity()
 export class User {
@@ -22,6 +22,6 @@ export class User {
     @OneToOne(() => UserConfig, (config) => config.user)
     config: UserConfig;
 
-    @OneToMany(() => UserVocabulary, (v) => v.user)
-    vocabularies: UserVocabulary[];
+    @OneToMany(() => Vocabulary, (v) => v.user)
+    vocabularies: Vocabulary[];
 }

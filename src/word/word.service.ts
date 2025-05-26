@@ -5,15 +5,26 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan } from 'typeorm';
-import { UserVocabularyWord } from './entities/user-vocabulary-word.entity';
-import { CreateUserVocabularyWordDto } from './dto/create-user-vocabulary-word.dto';
-import { UpdateUserVocabularyWordDto } from './dto/update-user-vocabulary-word.dto';
+import { Word } from './entities/word.entity';
+import { CreateWordDto } from './dto/create-word.dto';
+import { UpdateWordDto } from './dto/update-word.dto';
+import { Vocabulary } from 'src/vocabulary/entities/vocabulary.entity';
+import { VocabularyService } from 'src/vocabulary/vocabulary.service';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
-export class UserVocabularyWordService {
+export class WordService {
     constructor(
-        @InjectRepository(UserVocabularyWord)
-        private readonly wordRepo: Repository<UserVocabularyWord>
+        @InjectRepository(Word)
+        private readonly wordRepo: Repository<Word>,
+
+        @InjectRepository(Vocabulary)
+        private readonly vocabularyRepo: Repository<Vocabulary>,
+
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+
+        private readonly vocabularyService: VocabularyService
     ) {}
 
     private stripTime(date: Date): Date {
@@ -28,54 +39,64 @@ export class UserVocabularyWordService {
         return today;
     }
 
-    async create(
-        vocabularyId: number,
-        dto: CreateUserVocabularyWordDto
-    ): Promise<UserVocabularyWord> {
+    async create(dto: CreateWordDto): Promise<Word> {
         const wordLower = dto.word.toLowerCase().trim();
         const translateLower = dto.translate.toLowerCase().trim();
 
+        if (dto.sourceLang === dto.targetLang) {
+            throw new BadRequestException(
+                'Source and target languages must be different.'
+            );
+        }
+
+        const vocabulary = await this.vocabularyService.createVocabulary({
+            userId: dto.userId,
+            sourceLanguageId: dto.sourceLang,
+            targetLanguageId: dto.targetLang,
+        });
+
         const exists = await this.wordRepo.findOne({
             where: {
-                vocabulary: { id: vocabularyId },
+                vocabulary: { id: vocabulary.id },
                 word: wordLower,
                 translate: translateLower,
             },
         });
 
         if (exists) {
-            throw new Error(
-                'Word with this translation already exists in vocabulary'
+            throw new BadRequestException(
+                'Word with this translation already exists in this vocabulary.'
             );
         }
 
+        const user = await this.userRepository.findOne({
+            where: { id: dto.userId },
+        });
+        if (!user) throw new NotFoundException('User not found');
+
         const word = this.wordRepo.create({
-            ...dto,
             word: wordLower,
             translate: translateLower,
-            vocabulary: { id: vocabularyId } as any,
-            dateForRepetition: null, // explicitly null
+            vocabulary,
             memoryScore: 0,
             learningDate: null,
+            dateForRepetition: null,
         });
 
         return this.wordRepo.save(word);
     }
 
-    async findAll(): Promise<UserVocabularyWord[]> {
+    async findAll(): Promise<Word[]> {
         return this.wordRepo.find();
     }
 
-    async findOne(id: number): Promise<UserVocabularyWord> {
+    async findOne(id: number): Promise<Word> {
         const word = await this.wordRepo.findOne({ where: { id } });
         if (!word) throw new NotFoundException();
         return word;
     }
 
-    async update(
-        id: number,
-        dto: UpdateUserVocabularyWordDto
-    ): Promise<UserVocabularyWord> {
+    async update(id: number, dto: UpdateWordDto): Promise<Word> {
         const word = await this.findOne(id);
 
         if (dto.word) {
@@ -94,9 +115,7 @@ export class UserVocabularyWordService {
         await this.wordRepo.remove(word);
     }
 
-    async getAvailableForTestWords(
-        vocabularyId: number
-    ): Promise<UserVocabularyWord[]> {
+    async getAvailableForTestWords(vocabularyId: string): Promise<Word[]> {
         return this.wordRepo.find({
             where: {
                 vocabulary: { id: vocabularyId },
@@ -106,8 +125,8 @@ export class UserVocabularyWordService {
     }
 
     async getAvailableForRepetitionTestWords(
-        vocabularyId: number
-    ): Promise<UserVocabularyWord[]> {
+        vocabularyId: string
+    ): Promise<Word[]> {
         const today = this.stripTime(new Date());
 
         return this.wordRepo.find({
@@ -122,7 +141,7 @@ export class UserVocabularyWordService {
     async testAnswer(
         id: number,
         answer: string
-    ): Promise<{ correct: boolean; updated: UserVocabularyWord }> {
+    ): Promise<{ correct: boolean; updated: Word }> {
         const word = await this.findOne(id);
 
         const today = this.stripTime(new Date());
@@ -157,10 +176,10 @@ export class UserVocabularyWordService {
     }
 
     async getAllLearnedWordsByMonth(
-        vocabularyId: number,
+        vocabularyId: string,
         year: number,
         month: number
-    ): Promise<Record<string, UserVocabularyWord[]>> {
+    ): Promise<Record<string, Word[]>> {
         const start = new Date(year, month - 1, 1);
         const end = new Date(year, month, 0);
 
@@ -173,7 +192,7 @@ export class UserVocabularyWordService {
             order: { learningDate: 'ASC' },
         });
 
-        const grouped: Record<string, UserVocabularyWord[]> = {};
+        const grouped: Record<string, Word[]> = {};
 
         for (const word of words) {
             const day = word.learningDate
