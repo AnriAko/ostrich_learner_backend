@@ -14,7 +14,7 @@ import { UpdateWordDto } from './dto/update-word.dto';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Vocabulary Words')
-@Controller('vocabulary-words')
+@Controller('words')
 export class WordController {
     constructor(private readonly wordService: WordService) {}
 
