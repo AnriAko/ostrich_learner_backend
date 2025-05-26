@@ -17,13 +17,10 @@ export class WordService {
     constructor(
         @InjectRepository(Word)
         private readonly wordRepo: Repository<Word>,
-
         @InjectRepository(Vocabulary)
         private readonly vocabularyRepo: Repository<Vocabulary>,
-
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-
         private readonly vocabularyService: VocabularyService
     ) {}
 
@@ -69,9 +66,7 @@ export class WordService {
             );
         }
 
-        const user = await this.userRepository.findOne({
-            where: { id: dto.userId },
-        });
+        const user = await this.userRepository.findOneBy({ id: dto.userId });
         if (!user) throw new NotFoundException('User not found');
 
         const word = this.wordRepo.create({
@@ -86,26 +81,16 @@ export class WordService {
         return this.wordRepo.save(word);
     }
 
-    async findAll(): Promise<Word[]> {
-        return this.wordRepo.find();
-    }
-
     async findOne(id: number): Promise<Word> {
         const word = await this.wordRepo.findOne({ where: { id } });
-        if (!word) throw new NotFoundException();
+        if (!word) throw new NotFoundException('Word not found');
         return word;
     }
 
     async update(id: number, dto: UpdateWordDto): Promise<Word> {
         const word = await this.findOne(id);
-
-        if (dto.word) {
-            dto.word = dto.word.toLowerCase().trim();
-        }
-        if (dto.translate) {
-            dto.translate = dto.translate.toLowerCase().trim();
-        }
-
+        if (dto.word) dto.word = dto.word.toLowerCase().trim();
+        if (dto.translate) dto.translate = dto.translate.toLowerCase().trim();
         Object.assign(word, dto);
         return this.wordRepo.save(word);
     }
@@ -117,10 +102,7 @@ export class WordService {
 
     async getAvailableForTestWords(vocabularyId: string): Promise<Word[]> {
         return this.wordRepo.find({
-            where: {
-                vocabulary: { id: vocabularyId },
-                memoryScore: 0,
-            },
+            where: { vocabulary: { id: vocabularyId }, memoryScore: 0 },
         });
     }
 
@@ -128,7 +110,6 @@ export class WordService {
         vocabularyId: string
     ): Promise<Word[]> {
         const today = this.stripTime(new Date());
-
         return this.wordRepo.find({
             where: {
                 vocabulary: { id: vocabularyId },
@@ -143,7 +124,6 @@ export class WordService {
         answer: string
     ): Promise<{ correct: boolean; updated: Word }> {
         const word = await this.findOne(id);
-
         const today = this.stripTime(new Date());
         const wordDate = word.dateForRepetition
             ? this.stripTime(new Date(word.dateForRepetition))
@@ -162,7 +142,6 @@ export class WordService {
             if (word.memoryScore === 0 && !word.learningDate) {
                 word.learningDate = today;
             }
-
             word.memoryScore = Math.min(11, word.memoryScore + 1);
         } else {
             word.memoryScore =
@@ -170,7 +149,6 @@ export class WordService {
         }
 
         word.dateForRepetition = this.getNextRepetitionDate(word.memoryScore);
-
         const updated = await this.wordRepo.save(word);
         return { correct, updated };
     }
@@ -193,17 +171,61 @@ export class WordService {
         });
 
         const grouped: Record<string, Word[]> = {};
-
         for (const word of words) {
-            const day = word.learningDate
-                ? new Date(word.learningDate).toLocaleDateString()
-                : 'No date';
-            if (!grouped[day]) {
-                grouped[day] = [];
-            }
+            const day =
+                word.learningDate?.toISOString().split('T')[0] ?? 'No date';
+            grouped[day] = grouped[day] || [];
             grouped[day].push(word);
         }
 
         return grouped;
+    }
+
+    async findByUser(userId: number, page = 1, pageSize = 20): Promise<Word[]> {
+        return this.wordRepo
+            .createQueryBuilder('word')
+            .innerJoin('word.vocabulary', 'vocabulary')
+            .innerJoin('vocabulary.user', 'user')
+            .where('user.id = :userId', { userId })
+            .skip((page - 1) * pageSize)
+            .take(pageSize)
+            .getMany();
+    }
+
+    async findByVocabulary(
+        vocabularyId: string,
+        page = 1,
+        pageSize = 20
+    ): Promise<Word[]> {
+        return this.wordRepo.find({
+            where: { vocabulary: { id: vocabularyId } },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            order: { id: 'ASC' },
+        });
+    }
+
+    async getLearningStatsByDay(
+        userId: number
+    ): Promise<{ date: string; count: number }[]> {
+        const words = await this.wordRepo
+            .createQueryBuilder('word')
+            .innerJoin('word.vocabulary', 'vocabulary')
+            .innerJoin('vocabulary.user', 'user')
+            .where('user.id = :userId', { userId })
+            .andWhere('word.memoryScore > 0')
+            .andWhere('word.learningDate IS NOT NULL')
+            .getMany();
+
+        const grouped: Record<string, number> = {};
+        for (const word of words) {
+            const date = word.learningDate?.toISOString().split('T')[0];
+            if (date) grouped[date] = (grouped[date] || 0) + 1;
+        }
+
+        return Object.entries(grouped).map(([date, count]) => ({
+            date,
+            count,
+        }));
     }
 }

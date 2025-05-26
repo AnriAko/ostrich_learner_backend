@@ -7,14 +7,21 @@ import {
     Param,
     Delete,
     ParseIntPipe,
+    Query,
 } from '@nestjs/common';
 import { WordService } from './word.service';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiParam,
+    ApiQuery,
+    ApiBody,
+} from '@nestjs/swagger';
 
 @ApiTags('Vocabulary Words')
-@Controller('words')
+@Controller('word')
 export class WordController {
     constructor(private readonly wordService: WordService) {}
 
@@ -23,12 +30,6 @@ export class WordController {
     @ApiBody({ type: CreateWordDto })
     create(@Body() createDto: CreateWordDto) {
         return this.wordService.create(createDto);
-    }
-
-    @Get()
-    @ApiOperation({ summary: 'Get all words (debug purpose)' })
-    findAll() {
-        return this.wordService.findAll();
     }
 
     @Get(':id')
@@ -64,5 +65,42 @@ export class WordController {
         @Body('answer') answer: string
     ) {
         return this.wordService.testAnswer(id, answer);
+    }
+
+    @Get('/vocabulary/:vocabularyId')
+    @ApiOperation({ summary: 'Get words by vocabulary with pagination' })
+    @ApiParam({ name: 'vocabularyId', type: 'string' })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'pageSize', required: false })
+    getByVocabulary(
+        @Param('vocabularyId') vocabularyId: string,
+        @Query('page') page = '1',
+        @Query('pageSize') pageSize = '20'
+    ) {
+        return this.wordService.findByVocabulary(
+            vocabularyId,
+            +page,
+            +pageSize
+        );
+    }
+
+    @Get('/user/:userId')
+    @ApiOperation({ summary: 'Get words by user with pagination' })
+    @ApiParam({ name: 'userId', type: Number })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'pageSize', required: false })
+    getByUser(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Query('page') page = '1',
+        @Query('pageSize') pageSize = '20'
+    ) {
+        return this.wordService.findByUser(userId, +page, +pageSize);
+    }
+
+    @Get('/user/:userId/learning-stats')
+    @ApiOperation({ summary: 'Get daily learning stats for user (calendar)' })
+    @ApiParam({ name: 'userId', type: Number })
+    getUserLearningStats(@Param('userId', ParseIntPipe) userId: number) {
+        return this.wordService.getLearningStatsByDay(userId);
     }
 }
