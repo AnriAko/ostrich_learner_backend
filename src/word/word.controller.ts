@@ -109,8 +109,8 @@ export class WordController {
             'Get words available for learning (memoryScore = 0 or no learningDate)',
     })
     @ApiParam({ name: 'vocabularyId', type: 'string' })
-    getAvailableForLearning(@Param('vocabularyId') vocabularyId: string) {
-        return this.wordService.getAvailableForTestWords(vocabularyId);
+    getAvailableForLearning() {
+        return this.wordService.getAvailableForTestWords();
     }
 
     @Get('/vocabulary/:vocabularyId/available-for-repetition')
@@ -119,9 +119,7 @@ export class WordController {
             'Get words available for repetition (based on dateForRepetition)',
     })
     @ApiParam({ name: 'vocabularyId', type: 'string' })
-    getAvailableForRepetition(@Param('vocabularyId') vocabularyId: string) {
-        return this.wordService.getAvailableForRepetitionTestWords(
-            vocabularyId
-        );
+    getAvailableForRepetition() {
+        return this.wordService.getAvailableForRepetitionTestWords();
     }
 }

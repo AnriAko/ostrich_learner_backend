@@ -43,8 +43,8 @@ export class WordService {
     }
 
     async create(dto: CreateWordDto): Promise<Word> {
-        const wordLower = dto.word.toLowerCase().trim();
-        const translateLower = dto.translate.toLowerCase().trim();
+        const wordLower = dto.origin.toLowerCase().trim();
+        const translateLower = dto.translation.toLowerCase().trim();
 
         if (dto.sourceLang === dto.targetLang) {
             throw new BadRequestException(
@@ -61,8 +61,8 @@ export class WordService {
         const exists = await this.wordRepo.findOne({
             where: {
                 vocabulary: { id: vocabulary.id },
-                word: wordLower,
-                translate: translateLower,
+                origin: wordLower,
+                translation: translateLower,
             },
         });
 
@@ -76,8 +76,8 @@ export class WordService {
         if (!user) throw new NotFoundException('User not found');
 
         const word = this.wordRepo.create({
-            word: wordLower,
-            translate: translateLower,
+            origin: wordLower,
+            translation: translateLower,
             vocabulary,
             memoryScore: 0,
             learningDate: null,
@@ -95,8 +95,9 @@ export class WordService {
 
     async update(id: number, dto: UpdateWordDto): Promise<Word> {
         const word = await this.findOne(id);
-        if (dto.word) dto.word = dto.word.toLowerCase().trim();
-        if (dto.translate) dto.translate = dto.translate.toLowerCase().trim();
+        if (dto.origin) dto.origin = dto.origin.toLowerCase().trim();
+        if (dto.translation)
+            dto.translation = dto.translation.toLowerCase().trim();
         Object.assign(word, dto);
         return this.wordRepo.save(word);
     }
@@ -106,31 +107,28 @@ export class WordService {
         await this.wordRepo.remove(word);
     }
 
-    async getAvailableForTestWords(vocabularyId: string): Promise<Word[]> {
+    async getAvailableForTestWords(): Promise<Word[]> {
         return this.wordRepo.find({
             where: [
                 {
-                    vocabulary: { id: vocabularyId },
                     memoryScore: 0,
                 },
                 {
-                    vocabulary: { id: vocabularyId },
                     learningDate: IsNull(),
                 },
             ],
         });
     }
 
-    async getAvailableForRepetitionTestWords(
-        vocabularyId: string
-    ): Promise<Word[]> {
+    async getAvailableForRepetitionTestWords(): Promise<Word[]> {
         const today = this.stripTime(new Date());
+
         return this.wordRepo.find({
             where: {
-                vocabulary: { id: vocabularyId },
                 memoryScore: MoreThan(0),
                 dateForRepetition: LessThanOrEqual(today),
             },
+            relations: ['vocabulary'],
         });
     }
 
@@ -151,7 +149,8 @@ export class WordService {
         }
 
         const correct =
-            word.translate.toLowerCase().trim() === answer.toLowerCase().trim();
+            word.translation.toLowerCase().trim() ===
+            answer.toLowerCase().trim();
 
         if (correct) {
             if (word.memoryScore === 0 && !word.learningDate) {
