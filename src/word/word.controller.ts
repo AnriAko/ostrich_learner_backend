@@ -103,4 +103,25 @@ export class WordController {
     getUserLearningStats(@Param('userId', ParseIntPipe) userId: number) {
         return this.wordService.getLearningStatsByDay(userId);
     }
+    @Get('/vocabulary/:vocabularyId/available-for-learning')
+    @ApiOperation({
+        summary:
+            'Get words available for learning (memoryScore = 0 or no learningDate)',
+    })
+    @ApiParam({ name: 'vocabularyId', type: 'string' })
+    getAvailableForLearning(@Param('vocabularyId') vocabularyId: string) {
+        return this.wordService.getAvailableForTestWords(vocabularyId);
+    }
+
+    @Get('/vocabulary/:vocabularyId/available-for-repetition')
+    @ApiOperation({
+        summary:
+            'Get words available for repetition (based on dateForRepetition)',
+    })
+    @ApiParam({ name: 'vocabularyId', type: 'string' })
+    getAvailableForRepetition(@Param('vocabularyId') vocabularyId: string) {
+        return this.wordService.getAvailableForRepetitionTestWords(
+            vocabularyId
+        );
+    }
 }

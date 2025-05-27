@@ -4,7 +4,13 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThan } from 'typeorm';
+import {
+    Repository,
+    Between,
+    MoreThan,
+    LessThanOrEqual,
+    IsNull,
+} from 'typeorm';
 import { Word } from './entities/word.entity';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
@@ -102,7 +108,16 @@ export class WordService {
 
     async getAvailableForTestWords(vocabularyId: string): Promise<Word[]> {
         return this.wordRepo.find({
-            where: { vocabulary: { id: vocabularyId }, memoryScore: 0 },
+            where: [
+                {
+                    vocabulary: { id: vocabularyId },
+                    memoryScore: 0,
+                },
+                {
+                    vocabulary: { id: vocabularyId },
+                    learningDate: IsNull(),
+                },
+            ],
         });
     }
 
@@ -114,7 +129,7 @@ export class WordService {
             where: {
                 vocabulary: { id: vocabularyId },
                 memoryScore: MoreThan(0),
-                dateForRepetition: Between(new Date('1970-01-01'), today),
+                dateForRepetition: LessThanOrEqual(today),
             },
         });
     }
