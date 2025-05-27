@@ -26,11 +26,11 @@ export class Word {
 
     @ApiProperty({ example: 'apple', description: 'The word being learned' })
     @Column()
-    word: string;
+    origin: string;
 
     @ApiProperty({ example: 'ვაშლი', description: 'Translation of the word' })
     @Column()
-    translate: string;
+    translation: string;
 
     @ApiProperty({
         example: '2025-04-15T00:00:00.000Z',

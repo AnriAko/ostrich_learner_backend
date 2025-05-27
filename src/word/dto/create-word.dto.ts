@@ -5,12 +5,12 @@ export class CreateWordDto {
     @ApiProperty({ example: 'apple' })
     @IsString()
     @IsNotEmpty()
-    word: string;
+    origin: string;
 
     @ApiProperty({ example: 'ვაშლი' })
     @IsString()
     @IsNotEmpty()
-    translate: string;
+    translation: string;
 
     @ApiProperty({ example: 'en', description: 'ID of source language' })
     @IsString()
