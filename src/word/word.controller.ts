@@ -6,7 +6,6 @@ import {
     Patch,
     Param,
     Delete,
-    ParseIntPipe,
     Query,
 } from '@nestjs/common';
 import { WordService } from './word.service';
@@ -34,25 +33,22 @@ export class WordController {
 
     @Get(':id')
     @ApiOperation({ summary: 'Get word by ID' })
-    @ApiParam({ name: 'id', type: Number })
-    findOne(@Param('id', ParseIntPipe) id: number) {
+    @ApiParam({ name: 'id', type: Number }) // предполагаем, что id слова — число
+    findOne(@Param('id') id: number) {
         return this.wordService.findOne(id);
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update word by ID' })
     @ApiParam({ name: 'id', type: Number })
-    update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateDto: UpdateWordDto
-    ) {
+    update(@Param('id') id: number, @Body() updateDto: UpdateWordDto) {
         return this.wordService.update(id, updateDto);
     }
 
     @Delete(':id')
     @ApiOperation({ summary: 'Delete word by ID' })
     @ApiParam({ name: 'id', type: Number })
-    remove(@Param('id', ParseIntPipe) id: number) {
+    remove(@Param('id') id: number) {
         return this.wordService.remove(id);
     }
 
@@ -60,10 +56,7 @@ export class WordController {
     @ApiOperation({ summary: 'Test user answer for a word' })
     @ApiParam({ name: 'id', type: Number })
     @ApiBody({ schema: { properties: { answer: { type: 'string' } } } })
-    testAnswer(
-        @Param('id', ParseIntPipe) id: number,
-        @Body('answer') answer: string
-    ) {
+    testAnswer(@Param('id') id: number, @Body('answer') answer: string) {
         return this.wordService.testAnswer(id, answer);
     }
 
@@ -86,11 +79,11 @@ export class WordController {
 
     @Get('/user/:userId')
     @ApiOperation({ summary: 'Get words by user with pagination' })
-    @ApiParam({ name: 'userId', type: Number })
+    @ApiParam({ name: 'userId', type: 'string' })
     @ApiQuery({ name: 'page', required: false })
     @ApiQuery({ name: 'pageSize', required: false })
     getByUser(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Query('page') page = '1',
         @Query('pageSize') pageSize = '20'
     ) {
@@ -99,27 +92,22 @@ export class WordController {
 
     @Get('/user/:userId/learning-stats')
     @ApiOperation({ summary: 'Get daily learning stats for user (calendar)' })
-    @ApiParam({ name: 'userId', type: Number })
-    getUserLearningStats(@Param('userId', ParseIntPipe) userId: number) {
+    @ApiParam({ name: 'userId', type: 'string' })
+    getUserLearningStats(@Param('userId') userId: string) {
         return this.wordService.getLearningStatsByDay(userId);
     }
-    @Get('/vocabulary/:vocabularyId/available-for-learning')
-    @ApiOperation({
-        summary:
-            'Get words available for learning (memoryScore = 0 or no learningDate)',
-    })
-    @ApiParam({ name: 'vocabularyId', type: 'string' })
-    getAvailableForLearning() {
-        return this.wordService.getAvailableForTestWords();
+
+    @Get('/available-for-learning/:userId')
+    @ApiOperation({ summary: 'Get words available for learning for user' })
+    @ApiParam({ name: 'userId', type: 'string' })
+    getAvailableForLearning(@Param('userId') userId: string) {
+        return this.wordService.getAvailableForLearning(userId);
     }
 
-    @Get('/vocabulary/:vocabularyId/available-for-repetition')
-    @ApiOperation({
-        summary:
-            'Get words available for repetition (based on dateForRepetition)',
-    })
-    @ApiParam({ name: 'vocabularyId', type: 'string' })
-    getAvailableForRepetition() {
-        return this.wordService.getAvailableForRepetitionTestWords();
+    @Get('/available-for-repetition/:userId')
+    @ApiOperation({ summary: 'Get words available for repetition for user' })
+    @ApiParam({ name: 'userId', type: 'string' })
+    getAvailableForRepetition(@Param('userId') userId: string) {
+        return this.wordService.getAvailableForRepetitionTestWords(userId);
     }
 }

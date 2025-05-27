@@ -107,29 +107,26 @@ export class WordService {
         await this.wordRepo.remove(word);
     }
 
-    async getAvailableForTestWords(): Promise<Word[]> {
-        return this.wordRepo.find({
-            where: [
-                {
-                    memoryScore: 0,
-                },
-                {
-                    learningDate: IsNull(),
-                },
-            ],
-        });
+    async getAvailableForLearning(userId: string): Promise<Word[]> {
+        return this.wordRepo
+            .createQueryBuilder('word')
+            .leftJoin('word.vocabulary', 'vocabulary')
+            .where('vocabulary.user.id = :userId', { userId })
+            .andWhere('word.memoryScore = 0')
+            .orWhere('word.learningDate IS NULL')
+            .getMany();
     }
 
-    async getAvailableForRepetitionTestWords(): Promise<Word[]> {
+    async getAvailableForRepetitionTestWords(userId: string): Promise<Word[]> {
         const today = this.stripTime(new Date());
 
-        return this.wordRepo.find({
-            where: {
-                memoryScore: MoreThan(0),
-                dateForRepetition: LessThanOrEqual(today),
-            },
-            relations: ['vocabulary'],
-        });
+        return this.wordRepo
+            .createQueryBuilder('word')
+            .leftJoinAndSelect('word.vocabulary', 'vocabulary')
+            .where('vocabulary.user.id = :userId', { userId })
+            .andWhere('word.memoryScore > 0')
+            .andWhere('word.dateForRepetition <= :today', { today })
+            .getMany();
     }
 
     async testAnswer(
@@ -195,7 +192,7 @@ export class WordService {
         return grouped;
     }
 
-    async findByUser(userId: number, page = 1, pageSize = 20): Promise<Word[]> {
+    async findByUser(userId: string, page = 1, pageSize = 20): Promise<Word[]> {
         return this.wordRepo
             .createQueryBuilder('word')
             .innerJoin('word.vocabulary', 'vocabulary')
@@ -220,7 +217,7 @@ export class WordService {
     }
 
     async getLearningStatsByDay(
-        userId: number
+        userId: string
     ): Promise<{ date: string; count: number }[]> {
         const words = await this.wordRepo
             .createQueryBuilder('word')
