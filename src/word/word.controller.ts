@@ -7,10 +7,12 @@ import {
     Param,
     Delete,
     Query,
+    Request,
 } from '@nestjs/common';
 import { WordService } from './word.service';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
+import { WordFilterDto } from './dto/word-filter.dto';
 import {
     ApiTags,
     ApiOperation,
@@ -18,6 +20,7 @@ import {
     ApiQuery,
     ApiBody,
 } from '@nestjs/swagger';
+import { Word } from './entities/word.entity';
 
 @ApiTags('Vocabulary Words')
 @Controller('word')
@@ -29,13 +32,6 @@ export class WordController {
     @ApiBody({ type: CreateWordDto })
     create(@Body() createDto: CreateWordDto) {
         return this.wordService.create(createDto);
-    }
-
-    @Get(':id')
-    @ApiOperation({ summary: 'Get word by ID' })
-    @ApiParam({ name: 'id', type: Number }) // предполагаем, что id слова — число
-    findOne(@Param('id') id: number) {
-        return this.wordService.findOne(id);
     }
 
     @Patch(':id')
@@ -109,5 +105,19 @@ export class WordController {
     @ApiParam({ name: 'userId', type: 'string' })
     getAvailableForRepetition(@Param('userId') userId: string) {
         return this.wordService.getAvailableForRepetitionTestWords(userId);
+    }
+
+    @Get('filtered')
+    @ApiOperation({ summary: 'Filter words for authenticated user' })
+    async getFilteredWords(
+        @Query() filters: WordFilterDto
+    ): Promise<{ data: Word[]; total: number }> {
+        return this.wordService.findFiltered(filters.userId, filters);
+    }
+    @Get('by-id/:id')
+    @ApiOperation({ summary: 'Get word by ID' })
+    @ApiParam({ name: 'id', type: Number })
+    findOne(@Param('id') id: number) {
+        return this.wordService.findOne(id);
     }
 }

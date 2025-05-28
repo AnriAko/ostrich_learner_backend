@@ -17,6 +17,7 @@ import { UpdateWordDto } from './dto/update-word.dto';
 import { Vocabulary } from 'src/vocabulary/entities/vocabulary.entity';
 import { VocabularyService } from 'src/vocabulary/vocabulary.service';
 import { User } from 'src/user/entities/user.entity';
+import { WordFilterDto } from './dto/word-filter.dto';
 
 @Injectable()
 export class WordService {
@@ -238,5 +239,107 @@ export class WordService {
             date,
             count,
         }));
+    }
+    async findFiltered(
+        userId: string,
+        filters: WordFilterDto
+    ): Promise<{ data: Word[]; total: number }> {
+        const {
+            origin,
+            translation,
+            memoryScore,
+            learningDateFrom,
+            learningDateTo,
+            dateForRepetitionFrom,
+            dateForRepetitionTo,
+            vocabularyId,
+            search,
+            page = 1,
+            pageSize = 20,
+            sortBy = 'id',
+            sortOrder = 'ASC',
+        } = filters;
+
+        const effectivePageSize = Math.max(10, Math.min(50, pageSize));
+
+        const allowedSortFields = [
+            'id',
+            'origin',
+            'translation',
+            'memoryScore',
+            'learningDate',
+            'dateForRepetition',
+            'createdAt',
+            'updatedAt',
+        ];
+
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'id';
+        const safeSortOrder = sortOrder === 'DESC' ? 'DESC' : 'ASC';
+
+        const query = this.wordRepo
+            .createQueryBuilder('word')
+            .leftJoin('word.vocabulary', 'vocabulary')
+            .leftJoin('vocabulary.user', 'user')
+            .where('user.id = :userId', { userId });
+
+        if (origin) {
+            query.andWhere('LOWER(word.origin) LIKE LOWER(:origin)', {
+                origin: `%${origin}%`,
+            });
+        }
+
+        if (translation) {
+            query.andWhere('LOWER(word.translation) LIKE LOWER(:translation)', {
+                translation: `%${translation}%`,
+            });
+        }
+
+        if (memoryScore !== undefined) {
+            query.andWhere('word.memoryScore = :memoryScore', { memoryScore });
+        }
+
+        if (learningDateFrom) {
+            query.andWhere('word.learningDate >= :learningDateFrom', {
+                learningDateFrom,
+            });
+        }
+
+        if (learningDateTo) {
+            query.andWhere('word.learningDate <= :learningDateTo', {
+                learningDateTo,
+            });
+        }
+
+        if (dateForRepetitionFrom) {
+            query.andWhere('word.dateForRepetition >= :dateForRepetitionFrom', {
+                dateForRepetitionFrom,
+            });
+        }
+
+        if (dateForRepetitionTo) {
+            query.andWhere('word.dateForRepetition <= :dateForRepetitionTo', {
+                dateForRepetitionTo,
+            });
+        }
+
+        if (vocabularyId) {
+            query.andWhere('vocabulary.id = :vocabularyId', { vocabularyId });
+        }
+
+        if (search) {
+            query.andWhere(
+                '(LOWER(word.origin) LIKE LOWER(:search) OR LOWER(word.translation) LIKE LOWER(:search))',
+                { search: `%${search}%` }
+            );
+        }
+
+        query
+            .orderBy(`word.${safeSortBy}`, safeSortOrder)
+            .skip((page - 1) * effectivePageSize)
+            .take(effectivePageSize);
+
+        const [data, total] = await query.getManyAndCount();
+
+        return { data, total };
     }
 }
