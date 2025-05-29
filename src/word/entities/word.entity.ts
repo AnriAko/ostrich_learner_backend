@@ -4,6 +4,7 @@ import {
     Column,
     ManyToOne,
     JoinColumn,
+    CreateDateColumn,
 } from 'typeorm';
 import { Vocabulary } from '../../vocabulary/entities/vocabulary.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -57,4 +58,11 @@ export class Word {
     })
     @Column({ type: 'timestamp', nullable: true })
     learningDate: Date | null;
+
+    @ApiProperty({
+        example: '2025-05-29T12:00:00.000Z',
+        description: 'Date when the word was created',
+    })
+    @CreateDateColumn({ type: 'timestamp' })
+    creationDate: Date;
 }

@@ -112,8 +112,13 @@ export class WordController {
     async getFilteredWords(
         @Query() filters: WordFilterDto
     ): Promise<{ data: Word[]; total: number }> {
-        return this.wordService.findFiltered(filters.userId, filters);
+        const { items, total } = await this.wordService.findFiltered(
+            filters.userId,
+            filters
+        );
+        return { data: items, total };
     }
+
     @Get('by-id/:id')
     @ApiOperation({ summary: 'Get word by ID' })
     @ApiParam({ name: 'id', type: Number })

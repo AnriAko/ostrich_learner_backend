@@ -38,6 +38,7 @@ export class VocabularyService {
         }
 
         const vocabularyId = `${user.id}-${sourceLanguage.id}-${targetLanguage.id}`;
+        const vocabularyName = `${sourceLanguage.id}-${targetLanguage.id}`;
 
         const existing = await this.userVocabularyRepository.findOne({
             where: { id: vocabularyId, user: { id: user.id } },
@@ -49,6 +50,7 @@ export class VocabularyService {
 
         const vocabulary = this.userVocabularyRepository.create({
             id: vocabularyId,
+            name: vocabularyName,
             user,
             sourceLanguage,
             targetLanguage,

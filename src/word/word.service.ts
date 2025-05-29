@@ -52,6 +52,7 @@ export class WordService {
                 'Source and target languages must be different.'
             );
         }
+        console.log(dto);
 
         const vocabulary = await this.vocabularyService.createVocabulary({
             userId: dto.userId,
@@ -240,106 +241,71 @@ export class WordService {
             count,
         }));
     }
-    async findFiltered(
-        userId: string,
-        filters: WordFilterDto
-    ): Promise<{ data: Word[]; total: number }> {
+    // src/words/words.service.ts
+    // words.service.ts
+
+    async findFiltered(userId: string, filterDto: WordFilterDto) {
         const {
             origin,
             translation,
-            memoryScore,
-            learningDateFrom,
-            learningDateTo,
-            dateForRepetitionFrom,
-            dateForRepetitionTo,
             vocabularyId,
-            search,
+            vocabulary,
+            sortBy = 'learningDate',
+            sortOrder = 'desc',
             page = 1,
             pageSize = 20,
-            sortBy = 'id',
-            sortOrder = 'ASC',
-        } = filters;
+        } = filterDto;
+        console.log(filterDto);
 
-        const effectivePageSize = Math.max(10, Math.min(50, pageSize));
+        const skip = (page - 1) * pageSize;
 
-        const allowedSortFields = [
-            'id',
-            'origin',
-            'translation',
-            'memoryScore',
-            'learningDate',
-            'dateForRepetition',
-            'createdAt',
-            'updatedAt',
-        ];
-
-        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'id';
-        const safeSortOrder = sortOrder === 'DESC' ? 'DESC' : 'ASC';
-
-        const query = this.wordRepo
+        const queryBuilder = this.wordRepo
             .createQueryBuilder('word')
-            .leftJoin('word.vocabulary', 'vocabulary')
-            .leftJoin('vocabulary.user', 'user')
+            .innerJoinAndSelect('word.vocabulary', 'vocabulary')
+            .innerJoin('vocabulary.user', 'user')
             .where('user.id = :userId', { userId });
 
         if (origin) {
-            query.andWhere('LOWER(word.origin) LIKE LOWER(:origin)', {
-                origin: `%${origin}%`,
+            queryBuilder.andWhere('LOWER(word.origin) LIKE :origin', {
+                origin: `%${origin.toLowerCase()}%`,
             });
         }
 
         if (translation) {
-            query.andWhere('LOWER(word.translation) LIKE LOWER(:translation)', {
-                translation: `%${translation}%`,
-            });
-        }
-
-        if (memoryScore !== undefined) {
-            query.andWhere('word.memoryScore = :memoryScore', { memoryScore });
-        }
-
-        if (learningDateFrom) {
-            query.andWhere('word.learningDate >= :learningDateFrom', {
-                learningDateFrom,
-            });
-        }
-
-        if (learningDateTo) {
-            query.andWhere('word.learningDate <= :learningDateTo', {
-                learningDateTo,
-            });
-        }
-
-        if (dateForRepetitionFrom) {
-            query.andWhere('word.dateForRepetition >= :dateForRepetitionFrom', {
-                dateForRepetitionFrom,
-            });
-        }
-
-        if (dateForRepetitionTo) {
-            query.andWhere('word.dateForRepetition <= :dateForRepetitionTo', {
-                dateForRepetitionTo,
+            queryBuilder.andWhere('LOWER(word.translation) LIKE :translation', {
+                translation: `%${translation.toLowerCase()}%`,
             });
         }
 
         if (vocabularyId) {
-            query.andWhere('vocabulary.id = :vocabularyId', { vocabularyId });
+            queryBuilder.andWhere('vocabulary.id = :vocabularyId', {
+                vocabularyId,
+            });
         }
 
-        if (search) {
-            query.andWhere(
-                '(LOWER(word.origin) LIKE LOWER(:search) OR LOWER(word.translation) LIKE LOWER(:search))',
-                { search: `%${search}%` }
-            );
+        if (vocabulary) {
+            queryBuilder.andWhere('LOWER(vocabulary.name) LIKE :vocabulary', {
+                vocabulary: `%${vocabulary.toLowerCase()}%`,
+            });
         }
 
-        query
-            .orderBy(`word.${safeSortBy}`, safeSortOrder)
-            .skip((page - 1) * effectivePageSize)
-            .take(effectivePageSize);
+        const orderField =
+            sortBy === 'vocabulary' || sortBy === 'vocabularyName'
+                ? 'vocabulary.name'
+                : `word.${sortBy}`;
 
-        const [data, total] = await query.getManyAndCount();
+        queryBuilder
+            .orderBy(orderField, sortOrder.toUpperCase() as 'ASC' | 'DESC')
+            .skip(skip)
+            .take(pageSize);
 
-        return { data, total };
+        const [words, total] = await queryBuilder.getManyAndCount();
+
+        const items = words.map((word) => ({
+            ...word,
+            vocabularyName: word.vocabulary.name,
+        }));
+
+        return { items, total };
     }
 }
