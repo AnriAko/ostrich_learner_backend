@@ -250,12 +250,11 @@ export class WordService {
             translation,
             vocabularyId,
             vocabulary,
-            sortBy = 'learningDate',
+            sortBy = 'creationDate',
             sortOrder = 'desc',
             page = 1,
             pageSize = 20,
         } = filterDto;
-        console.log(filterDto);
 
         const skip = (page - 1) * pageSize;
 
