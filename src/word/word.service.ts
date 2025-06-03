@@ -109,26 +109,35 @@ export class WordService {
         await this.wordRepo.remove(word);
     }
 
-    async getAvailableForLearning(userId: string): Promise<Word[]> {
-        return this.wordRepo
+    async getAvailableForLearning(userId: string): Promise<any[]> {
+        const words = await this.wordRepo
             .createQueryBuilder('word')
-            .leftJoin('word.vocabulary', 'vocabulary')
+            .leftJoinAndSelect('word.vocabulary', 'vocabulary')
             .where('vocabulary.user.id = :userId', { userId })
-            .andWhere('word.memoryScore = 0')
-            .orWhere('word.learningDate IS NULL')
+            .andWhere('(word.memoryScore = 0 OR word.learningDate IS NULL)')
             .getMany();
+
+        return words.map((word) => ({
+            ...word,
+            vocabularyName: word.vocabulary.name,
+        }));
     }
 
-    async getAvailableForRepetitionTestWords(userId: string): Promise<Word[]> {
+    async getAvailableForRepetitionTestWords(userId: string): Promise<any[]> {
         const today = this.stripTime(new Date());
 
-        return this.wordRepo
+        const words = await this.wordRepo
             .createQueryBuilder('word')
             .leftJoinAndSelect('word.vocabulary', 'vocabulary')
             .where('vocabulary.user.id = :userId', { userId })
             .andWhere('word.memoryScore > 0')
             .andWhere('word.dateForRepetition <= :today', { today })
             .getMany();
+
+        return words.map((word) => ({
+            ...word,
+            vocabularyName: word.vocabulary.name,
+        }));
     }
 
     async testAnswer(
