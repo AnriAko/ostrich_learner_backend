@@ -56,6 +56,36 @@ export class WordController {
         return this.wordService.testAnswer(id, answer);
     }
 
+    @Post(':id/check-answer')
+    @ApiOperation({ summary: 'Check user answer for a word with 3 states' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiBody({
+        schema: {
+            properties: {
+                origin: { type: 'string' },
+                answer: { type: 'string' },
+                isReversed: { type: 'boolean' },
+                userId: { type: 'string' },
+            },
+            required: ['origin', 'answer', 'isReversed', 'userId'],
+        },
+    })
+    checkAnswer(
+        @Param('id') id: number,
+        @Body('origin') origin: string,
+        @Body('answer') answer: string,
+        @Body('isReversed') isReversed: boolean,
+        @Body('userId') userId: string
+    ) {
+        return this.wordService.checkAnswer(
+            id,
+            origin,
+            answer,
+            isReversed,
+            userId
+        );
+    }
+
     @Get('/vocabulary/:vocabularyId')
     @ApiOperation({ summary: 'Get words by vocabulary with pagination' })
     @ApiParam({ name: 'vocabularyId', type: 'string' })

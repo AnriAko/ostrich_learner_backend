@@ -52,8 +52,6 @@ export class WordService {
                 'Source and target languages must be different.'
             );
         }
-        console.log(dto);
-
         const vocabulary = await this.vocabularyService.createVocabulary({
             userId: dto.userId,
             sourceLanguageId: dto.sourceLang,
@@ -250,8 +248,6 @@ export class WordService {
             count,
         }));
     }
-    // src/words/words.service.ts
-    // words.service.ts
 
     async findFiltered(userId: string, filterDto: WordFilterDto) {
         const {
@@ -315,5 +311,45 @@ export class WordService {
         }));
 
         return { items, total };
+    }
+    async checkAnswer(
+        wordId: number,
+        origin: string,
+        answer: string,
+        isReversed: boolean,
+        userId: string
+    ): Promise<'directMatch' | 'userHasThisTranslation' | 'noMatch'> {
+        const normalizedAnswer = answer.toLowerCase().trim();
+        const normalizedOrigin = origin.toLowerCase().trim();
+
+        const word = await this.wordRepo.findOne({
+            where: isReversed
+                ? { id: wordId, origin: normalizedAnswer }
+                : { id: wordId, translation: normalizedAnswer },
+        });
+
+        if (word) {
+            return 'directMatch';
+        }
+        const userTranslation = await this.wordRepo
+            .createQueryBuilder('word')
+            .innerJoin('word.vocabulary', 'vocabulary')
+            .innerJoin('vocabulary.user', 'user')
+            .where('user.id = :userId', { userId })
+            .andWhere(
+                isReversed
+                    ? 'word.origin = :answer'
+                    : 'word.translation = :answer',
+                {
+                    answer: normalizedAnswer,
+                }
+            )
+            .getOne();
+
+        if (userTranslation) {
+            return 'userHasThisTranslation';
+        }
+
+        return 'noMatch';
     }
 }
