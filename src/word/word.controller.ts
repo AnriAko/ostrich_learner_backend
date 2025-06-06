@@ -21,6 +21,7 @@ import {
     ApiBody,
 } from '@nestjs/swagger';
 import { Word } from './entities/word.entity';
+import { TestResultDto } from './dto/test-result.dto';
 
 @ApiTags('Vocabulary Words')
 @Controller('word')
@@ -48,14 +49,6 @@ export class WordController {
         return this.wordService.remove(id);
     }
 
-    @Post(':id/test')
-    @ApiOperation({ summary: 'Test user answer for a word' })
-    @ApiParam({ name: 'id', type: Number })
-    @ApiBody({ schema: { properties: { answer: { type: 'string' } } } })
-    testAnswer(@Param('id') id: number, @Body('answer') answer: string) {
-        return this.wordService.testAnswer(id, answer);
-    }
-
     @Post(':id/check-answer')
     @ApiOperation({ summary: 'Check user answer for a word with 3 states' })
     @ApiParam({ name: 'id', type: Number })
@@ -73,17 +66,10 @@ export class WordController {
     checkAnswer(
         @Param('id') id: number,
         @Body('origin') origin: string,
-        @Body('answer') answer: string,
-        @Body('isReversed') isReversed: boolean,
+        @Body('translation') translation: string,
         @Body('userId') userId: string
     ) {
-        return this.wordService.checkAnswer(
-            id,
-            origin,
-            answer,
-            isReversed,
-            userId
-        );
+        return this.wordService.checkAnswer(id, origin, translation, userId);
     }
 
     @Get('/vocabulary/:vocabularyId')
@@ -147,6 +133,12 @@ export class WordController {
             filters
         );
         return { data: items, total };
+    }
+
+    @Post('process-test-results')
+    async processTestResults(@Body() results: TestResultDto[]) {
+        await this.wordService.processTestResults(results);
+        return { success: true };
     }
 
     @Get('by-id/:id')

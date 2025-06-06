@@ -4,13 +4,7 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-    Repository,
-    Between,
-    MoreThan,
-    LessThanOrEqual,
-    IsNull,
-} from 'typeorm';
+import { Repository, Between, MoreThan } from 'typeorm';
 import { Word } from './entities/word.entity';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
@@ -18,6 +12,7 @@ import { Vocabulary } from 'src/vocabulary/entities/vocabulary.entity';
 import { VocabularyService } from 'src/vocabulary/vocabulary.service';
 import { User } from 'src/user/entities/user.entity';
 import { WordFilterDto } from './dto/word-filter.dto';
+import { TestResultDto } from './dto/test-result.dto';
 
 @Injectable()
 export class WordService {
@@ -37,8 +32,7 @@ export class WordService {
 
     private getNextRepetitionDate(score: number): Date {
         const today = this.stripTime(new Date());
-        const addDays =
-            [0, 1, 3, 5, 7, 10, 14, 28, 42, 56, 70, 140][score] || 0;
+        const addDays = [1, 2, 4, 8, 16, 32, 64, 128, 256][score] || 0;
         today.setDate(today.getDate() + addDays);
         return today;
     }
@@ -136,41 +130,6 @@ export class WordService {
             ...word,
             vocabularyName: word.vocabulary.name,
         }));
-    }
-
-    async testAnswer(
-        id: number,
-        answer: string
-    ): Promise<{ correct: boolean; updated: Word }> {
-        const word = await this.findOne(id);
-        const today = this.stripTime(new Date());
-        const wordDate = word.dateForRepetition
-            ? this.stripTime(new Date(word.dateForRepetition))
-            : null;
-
-        if (word.memoryScore > 0 && wordDate && wordDate > today) {
-            throw new BadRequestException(
-                'This word is not ready for repetition yet.'
-            );
-        }
-
-        const correct =
-            word.translation.toLowerCase().trim() ===
-            answer.toLowerCase().trim();
-
-        if (correct) {
-            if (word.memoryScore === 0 && !word.learningDate) {
-                word.learningDate = today;
-            }
-            word.memoryScore = Math.min(11, word.memoryScore + 1);
-        } else {
-            word.memoryScore =
-                word.memoryScore > 0 ? Math.max(1, word.memoryScore - 1) : 0;
-        }
-
-        word.dateForRepetition = this.getNextRepetitionDate(word.memoryScore);
-        const updated = await this.wordRepo.save(word);
-        return { correct, updated };
     }
 
     async getAllLearnedWordsByMonth(
@@ -313,37 +272,37 @@ export class WordService {
         return { items, total };
     }
     async checkAnswer(
-        wordId: number,
+        id: number,
         origin: string,
-        answer: string,
-        isReversed: boolean,
+        translation: string,
         userId: string
     ): Promise<'directMatch' | 'userHasThisTranslation' | 'noMatch'> {
-        const normalizedAnswer = answer.toLowerCase().trim();
+        const normalizedTranslation = translation.toLowerCase().trim();
         const normalizedOrigin = origin.toLowerCase().trim();
 
         const word = await this.wordRepo.findOne({
-            where: isReversed
-                ? { id: wordId, origin: normalizedAnswer }
-                : { id: wordId, translation: normalizedAnswer },
+            where: {
+                id: id,
+                origin: normalizedOrigin,
+                translation: normalizedTranslation,
+            },
         });
 
         if (word) {
             return 'directMatch';
         }
+
         const userTranslation = await this.wordRepo
             .createQueryBuilder('word')
             .innerJoin('word.vocabulary', 'vocabulary')
             .innerJoin('vocabulary.user', 'user')
             .where('user.id = :userId', { userId })
-            .andWhere(
-                isReversed
-                    ? 'word.origin = :answer'
-                    : 'word.translation = :answer',
-                {
-                    answer: normalizedAnswer,
-                }
-            )
+            .andWhere('LOWER(TRIM(word.origin)) = :origin', {
+                origin: normalizedOrigin,
+            })
+            .andWhere('LOWER(TRIM(word.translation)) = :translation', {
+                translation: normalizedTranslation,
+            })
             .getOne();
 
         if (userTranslation) {
@@ -351,5 +310,46 @@ export class WordService {
         }
 
         return 'noMatch';
+    }
+    async processTestResults(results: TestResultDto[]): Promise<void> {
+        const ids = results.map((r) => r.id);
+        const words = await this.wordRepo.findByIds(ids);
+
+        if (words.length !== ids.length) {
+            throw new NotFoundException('Some words were not found');
+        }
+
+        const today = this.stripTime(new Date());
+        const resultsMap = new Map<number, boolean>();
+        results.forEach((r) => resultsMap.set(r.id, r.isMistaken));
+
+        for (const word of words) {
+            const isMistaken = resultsMap.get(word.id);
+            if (isMistaken === undefined) continue;
+            if (word.dateForRepetition && word.dateForRepetition > today) {
+                continue;
+            }
+            if (word.memoryScore === 0) {
+                word.memoryScore = 1;
+                word.dateForRepetition = this.getNextRepetitionDate(1);
+                word.learningDate = today;
+                continue;
+            }
+            if (!isMistaken) {
+                word.memoryScore = Math.min(word.memoryScore + 1, 10);
+            } else {
+                if (word.memoryScore > 1) {
+                    word.memoryScore = 1;
+                }
+            }
+            if (word.memoryScore >= 10) {
+                word.dateForRepetition = null;
+            } else {
+                word.dateForRepetition = this.getNextRepetitionDate(
+                    word.memoryScore
+                );
+            }
+        }
+        await this.wordRepo.save(words);
     }
 }
