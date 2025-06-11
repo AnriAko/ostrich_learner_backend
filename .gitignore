@@ -54,3 +54,7 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# generated python exe files without need of dependencies
+/src/utils/pdf_to_json/pdf_text_without_format_to_json_stream.exe
+/src/utils/pdf_to_json/pdf_to_json_stream.exe
