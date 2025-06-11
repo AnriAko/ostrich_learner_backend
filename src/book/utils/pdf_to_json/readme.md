@@ -13,4 +13,4 @@ If not using it just remove --upx-dir "C:/PathToUPX" flag in a command where "C:
 pyinstaller --onefile --upx-dir "C:/PathToUPX" pdf_to_json_stream.py
 ```
 
-> 💡 Make sure the `upx` binary is executable (`chmod +x /path/to/upx`) and that `pyinstaller` is installed (`pip install pyinstaller`).
+> 💡 Make sure the `upx` binary is executable (`chmod +x /path/to/upx`) and that `pyinstaller` is installed (`pip install pyinstaller`) and copy into dist folder in build before production
