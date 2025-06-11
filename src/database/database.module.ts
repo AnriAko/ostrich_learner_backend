@@ -32,8 +32,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
                 type: 'mongodb',
                 url: configService.get('MONGO_URI'),
                 database: configService.get('MONGO_DB'),
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
                 entities: [__dirname + '/../**/*.mongo-entity{.ts,.js}'],
                 synchronize: configService.get('MONGO_SYNC') === 'true',
             }),
