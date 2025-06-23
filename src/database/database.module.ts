@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongoClient } from 'mongodb';
 
 @Module({
     imports: [
@@ -9,33 +10,49 @@ import { TypeOrmModule } from '@nestjs/typeorm';
             isGlobal: true,
         }),
 
-        // MySQL connection (default)
         TypeOrmModule.forRootAsync({
             inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
+            useFactory: (config: ConfigService) => ({
                 type: 'mysql',
-                host: configService.get('DB_HOST'),
-                port: configService.get<number>('DB_PORT'),
-                username: configService.get('DB_USER'),
-                password: configService.get('DB_PASSWORD'),
-                database: configService.get('DB_NAME'),
+                host: config.get('DB_HOST'),
+                port: config.get<number>('DB_PORT'),
+                username: config.get('DB_USER'),
+                password: config.get('DB_PASSWORD'),
+                database: config.get('DB_NAME'),
                 entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-                synchronize: configService.get('MYSQL_SYNC') === 'true',
+                synchronize: config.get('MYSQL_SYNC') === 'true',
             }),
         }),
 
-        // MongoDB connection (named)
         TypeOrmModule.forRootAsync({
             inject: [ConfigService],
             name: 'mongo',
-            useFactory: (configService: ConfigService) => ({
+            useFactory: (config: ConfigService) => ({
                 type: 'mongodb',
-                url: configService.get('MONGO_URI'),
-                database: configService.get('MONGO_DB'),
+                url: config.get('MONGO_URI'),
+                database: config.get('MONGO_DB'),
                 entities: [__dirname + '/../**/*.mongo-entity{.ts,.js}'],
-                synchronize: configService.get('MONGO_SYNC') === 'true',
+                synchronize: config.get('MONGO_SYNC') === 'true',
             }),
         }),
     ],
+    providers: [
+        {
+            provide: MongoClient,
+            inject: [ConfigService],
+            useFactory: async (config: ConfigService) => {
+                const client = new MongoClient(config.get('MONGO_URI')!);
+                await client.connect();
+                return client;
+            },
+        },
+        {
+            provide: 'MONGO_URI',
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) =>
+                config.get<string>('MONGO_URI'),
+        },
+    ],
+    exports: [MongoClient, 'MONGO_URI'],
 })
 export class DatabaseModule {}

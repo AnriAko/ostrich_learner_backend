@@ -8,19 +8,16 @@ import {
     Param,
     Patch,
     Delete,
+    Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BookService } from './book.service';
-import { ConfigService } from '@nestjs/config';
 import { Express } from 'express';
 import { UploadPdfDto } from './dto/upload-pdf.dto';
 
 @Controller('book')
 export class BookController {
-    constructor(
-        private readonly bookService: BookService,
-        private readonly configService: ConfigService
-    ) {}
+    constructor(private readonly bookService: BookService) {}
 
     @Post()
     @UseInterceptors(FileInterceptor('file'))
@@ -28,26 +25,41 @@ export class BookController {
         @UploadedFile() file: Express.Multer.File,
         @Body() createBookDto: UploadPdfDto
     ) {
-        const mongoUri = this.configService.get<string>('MONGO_URI');
-        return this.bookService.createSimple(
+        return this.bookService.createBookWithPdf(
             file.buffer,
-            createBookDto.userId,
-            mongoUri!
+            createBookDto.userId
         );
     }
 
-    @Get()
-    findAll() {
-        return this.bookService.findAll();
+    @Get('user/:userId')
+    async findAllByUser(@Param('userId') userId: string) {
+        return this.bookService.findAllByUser(userId);
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.bookService.findOne(+id);
+    @Get(':id/pages')
+    async findPagesByBook(
+        @Param('id') id: string,
+        @Query('page') page = '1',
+        @Query('pageSize') pageSize = '5'
+    ) {
+        return this.bookService.findPagesByBookId(
+            id,
+            parseInt(page, 10),
+            parseInt(pageSize, 10)
+        );
+    }
+
+    @Patch(':id')
+    async update(
+        @Param('id') id: string,
+        @Body() updateDto: any,
+        @Query('userId') userId: string
+    ) {
+        return this.bookService.updateBookByUser(id, userId, updateDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.bookService.remove(+id);
+    async deleteOne(@Param('id') id: string, @Query('userId') userId: string) {
+        return this.bookService.deleteOneByUser(id, userId);
     }
 }
