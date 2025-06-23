@@ -36,7 +36,7 @@ export class BookController {
         return this.bookService.findAllByUser(userId);
     }
 
-    @Get(':id/pages')
+    @Get(':id')
     async findPagesByBook(
         @Param('id') id: string,
         @Query('page') page = '1',
