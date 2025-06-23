@@ -22,7 +22,7 @@ export class BookController {
         private readonly configService: ConfigService
     ) {}
 
-    @Post('simple')
+    @Post()
     @UseInterceptors(FileInterceptor('file'))
     async createSimple(
         @UploadedFile() file: Express.Multer.File,
