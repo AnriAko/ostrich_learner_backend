@@ -36,20 +36,6 @@ export class BookController {
         );
     }
 
-    @Post('extended')
-    @UseInterceptors(FileInterceptor('file'))
-    async createExtended(
-        @UploadedFile() file: Express.Multer.File,
-        @Body() createBookDto: UploadPdfDto
-    ) {
-        const mongoUri = this.configService.get<string>('MONGO_URI');
-        return this.bookService.createExtended(
-            file.buffer,
-            createBookDto.userId,
-            mongoUri!
-        );
-    }
-
     @Get()
     findAll() {
         return this.bookService.findAll();

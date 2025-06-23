@@ -9,15 +9,6 @@ export class BookService {
             pdfBuffer,
             userId,
             mongoUri,
-            'pdf_text_without_format_to_json_stream.exe'
-        );
-    }
-
-    async createExtended(pdfBuffer: Buffer, userId: string, mongoUri: string) {
-        return this.runPdfProcessing(
-            pdfBuffer,
-            userId,
-            mongoUri,
             'pdf_to_json_stream.exe'
         );
     }
