@@ -1,10 +1,23 @@
 import { Entity, ObjectIdColumn, ObjectId, Column } from 'typeorm';
 
-class Translation {
-    @Column() pos_id: number; // pos in array of words
-    @Column() translation_id: number; // id from mysql of translation
-    @Column() origin: string; // origin word for fast access
-    @Column() translation: string; // translation for fast access
+export class Translation {
+    @Column()
+    pos_id: number;
+
+    @Column()
+    translation_id: number;
+
+    @Column()
+    origin: string;
+
+    @Column()
+    translation: string;
+
+    @Column()
+    sourceLang: string;
+
+    @Column()
+    targetLang: string;
 }
 
 class Page {

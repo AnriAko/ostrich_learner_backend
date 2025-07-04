@@ -35,6 +35,8 @@ export class BookTranslationService {
                         translation_id: word.id,
                         origin: word.origin,
                         translation: word.translation,
+                        sourceLang: createWordDto.sourceLang,
+                        targetLang: createWordDto.targetLang,
                     },
                 } as PushOperator<any>,
             }
