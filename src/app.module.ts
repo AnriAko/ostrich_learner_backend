@@ -6,6 +6,7 @@ import { VocabularyModule } from './vocabulary/vocabulary.module';
 import { WordModule } from './word/word.module';
 import { DatabaseModule } from './database/database.module';
 import { BookModule } from './book/book.module';
+import { BookTranslationModule } from './book-translation/book-translation.module';
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { BookModule } from './book/book.module';
         VocabularyModule,
         WordModule,
         BookModule,
+        BookTranslationModule,
     ],
     controllers: [],
     providers: [],

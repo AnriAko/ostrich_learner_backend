@@ -207,7 +207,12 @@ export class WordService {
             count,
         }));
     }
-
+    async findManyByIds(ids: number[]): Promise<Word[]> {
+        if (!ids.length) return [];
+        return this.wordRepo.find({
+            where: ids.map((id) => ({ id })),
+        });
+    }
     async findFiltered(userId: string, filterDto: WordFilterDto) {
         const {
             origin,

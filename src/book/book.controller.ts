@@ -60,6 +60,6 @@ export class BookController {
 
     @Delete(':id')
     async deleteOne(@Param('id') id: string, @Query('userId') userId: string) {
-        return this.bookService.deleteOneByUser(id, userId);
+        return this.bookService.deleteOneBookByUser(id, userId);
     }
 }

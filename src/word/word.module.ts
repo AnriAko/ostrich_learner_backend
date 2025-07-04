@@ -6,13 +6,16 @@ import { Word } from './entities/word.entity';
 import { Vocabulary } from 'src/vocabulary/entities/vocabulary.entity';
 import { VocabularyModule } from 'src/vocabulary/vocabulary.module';
 import { User } from 'src/user/entities/user.entity';
+import { BookModule } from 'src/book/book.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Word, Vocabulary, User]),
         VocabularyModule,
+        BookModule,
     ],
     controllers: [WordController],
     providers: [WordService],
+    exports: [WordService],
 })
 export class WordModule {}
