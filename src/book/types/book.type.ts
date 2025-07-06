@@ -7,4 +7,7 @@ export interface BookType {
     p_count: number;
     p: PageType[];
     userId: string;
+    lastViewedPage?: number;
+    lastViewedPageSize?: number;
+    lastUpdated: Date;
 }

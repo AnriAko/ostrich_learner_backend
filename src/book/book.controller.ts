@@ -38,7 +38,7 @@ export class BookController {
         @Query('pageSize') pageSize: string = '15'
     ) {
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
-        const pageSizeNum = Math.min(50, parseInt(pageSize, 10) || 15); // ограничим максимум
+        const pageSizeNum = Math.min(50, parseInt(pageSize, 10) || 15);
 
         return this.bookService.findAllByUserPaginated(
             userId,
@@ -61,12 +61,12 @@ export class BookController {
     }
 
     @Patch(':id')
-    async update(
+    async updateBookTitle(
         @Param('id') id: string,
         @Body() updateDto: any,
         @Query('userId') userId: string
     ) {
-        return this.bookService.updateBookByUser(id, userId, updateDto);
+        return this.bookService.updateBookTitle(id, userId, updateDto);
     }
 
     @Delete(':id')

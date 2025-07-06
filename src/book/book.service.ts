@@ -136,15 +136,17 @@ export class BookService implements OnModuleDestroy {
         });
     }
 
-    async updateBookByUser(
-        id: string,
-        _userId: string,
-        updateDto: Partial<BookType>
-    ) {
+    async updateBookTitle(id: string, _userId: string, newTitle: string) {
         const collection = this.getCollection();
+
         const result = await collection.updateOne(
             { _id: new ObjectId(id) },
-            { $set: updateDto, lastUpdated: new Date() }
+            {
+                $set: {
+                    b: newTitle,
+                    lastUpdated: new Date(),
+                },
+            }
         );
 
         if (result.matchedCount === 0) {
