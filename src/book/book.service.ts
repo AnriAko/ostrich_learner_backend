@@ -39,9 +39,10 @@ export class BookService implements OnModuleDestroy {
         return collection
             .find({ userId })
             .project<Omit<BookType, 'p'>>({ p: 0 })
-            .sort({ lastUpdated: -1, _id: -1 })
+            .sort({ lastRead: -1, _id: -1 })
             .toArray();
     }
+
     async findAllByUserPaginated(
         userId: string,
         page: number = 1,
@@ -54,7 +55,7 @@ export class BookService implements OnModuleDestroy {
         const data = await collection
             .find({ userId })
             .project<Omit<BookType, 'p'>>({ p: 0 })
-            .sort({ lastUpdated: -1, _id: -1 })
+            .sort({ lastRead: -1, _id: -1 })
             .skip((page - 1) * pageSize)
             .limit(pageSize)
             .toArray();
@@ -97,9 +98,9 @@ export class BookService implements OnModuleDestroy {
             { _id: new ObjectId(id) },
             {
                 $set: {
+                    lastRead: new Date(),
                     lastViewedPage: page,
                     lastViewedPageSize: pageSize,
-                    lastUpdated: new Date(),
                 },
             }
         );
@@ -139,21 +140,31 @@ export class BookService implements OnModuleDestroy {
     async updateBookTitle(id: string, _userId: string, newTitle: string) {
         const collection = this.getCollection();
 
-        const result = await collection.updateOne(
+        const updateResult = await collection.updateOne(
             { _id: new ObjectId(id) },
             {
                 $set: {
                     b: newTitle,
-                    lastUpdated: new Date(),
                 },
             }
         );
 
-        if (result.matchedCount === 0) {
+        if (updateResult.matchedCount === 0) {
             throw new NotFoundException(`Book with id ${id} not found`);
         }
 
-        return { modifiedCount: result.modifiedCount };
+        const updatedBook = await collection.findOne(
+            { _id: new ObjectId(id) },
+            { projection: { p: 0 } }
+        );
+
+        if (!updatedBook) {
+            throw new NotFoundException(
+                `Book with id ${id} not found after update`
+            );
+        }
+
+        return updatedBook;
     }
 
     async deleteOneBookByUser(id: string, _userId: string) {
@@ -193,14 +204,6 @@ export class BookService implements OnModuleDestroy {
         const book = await collection.findOne(
             { _id: new ObjectId(insertedId) },
             { projection: { p: 0 } }
-        );
-        await collection.updateOne(
-            { _id: new ObjectId(insertedId) },
-            {
-                $set: {
-                    lastUpdated: new Date(),
-                },
-            }
         );
 
         if (!book) {

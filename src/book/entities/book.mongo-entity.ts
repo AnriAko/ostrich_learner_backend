@@ -51,6 +51,6 @@ export class Book {
     @Column({ nullable: true })
     lastViewedPageSize?: number;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    lastUpdated: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    lastRead?: Date;
 }

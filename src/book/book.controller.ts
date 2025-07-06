@@ -14,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { BookService } from './book.service';
 import { Express } from 'express';
 import { UploadPdfDto } from './dto/upload-pdf.dto';
+import { UpdateBookTitleDto } from './dto/update-book-title';
 
 @Controller('book')
 export class BookController {
@@ -60,13 +61,13 @@ export class BookController {
         );
     }
 
-    @Patch(':id')
+    @Patch(':id/title')
     async updateBookTitle(
         @Param('id') id: string,
-        @Body() updateDto: any,
+        @Body() dto: UpdateBookTitleDto,
         @Query('userId') userId: string
     ) {
-        return this.bookService.updateBookTitle(id, userId, updateDto);
+        return this.bookService.updateBookTitle(id, userId, dto.title);
     }
 
     @Delete(':id')
