@@ -39,6 +39,7 @@ export class BookService implements OnModuleDestroy {
         return collection
             .find({ userId })
             .project<Omit<BookType, 'p'>>({ p: 0 })
+            .sort({ lastUpdated: -1, _id: -1 })
             .toArray();
     }
 
@@ -73,7 +74,17 @@ export class BookService implements OnModuleDestroy {
 
         if (!book) throw new NotFoundException(`Book with id ${id} not found`);
 
-        // Lazy cleanup: remove invalid translations
+        await collection.updateOne(
+            { _id: new ObjectId(id) },
+            {
+                $set: {
+                    lastViewedPage: page,
+                    lastViewedPageSize: pageSize,
+                    lastUpdated: new Date(),
+                },
+            }
+        );
+
         const pages = await this.lazyCleanupInvalidTranslations(book.p);
 
         return {
@@ -114,7 +125,7 @@ export class BookService implements OnModuleDestroy {
         const collection = this.getCollection();
         const result = await collection.updateOne(
             { _id: new ObjectId(id) },
-            { $set: updateDto }
+            { $set: updateDto, lastUpdated: new Date() }
         );
 
         if (result.matchedCount === 0) {
@@ -161,6 +172,14 @@ export class BookService implements OnModuleDestroy {
         const book = await collection.findOne(
             { _id: new ObjectId(insertedId) },
             { projection: { p: 0 } }
+        );
+        await collection.updateOne(
+            { _id: new ObjectId(insertedId) },
+            {
+                $set: {
+                    lastUpdated: new Date(),
+                },
+            }
         );
 
         if (!book) {

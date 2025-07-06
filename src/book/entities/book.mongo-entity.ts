@@ -20,20 +20,37 @@ export class Translation {
     targetLang: string;
 }
 
-class Page {
-    @Column() t: string;
-    @Column(() => Translation) tr: Translation[];
+export class Page {
+    @Column()
+    t: string;
+
+    @Column(() => Translation)
+    tr: Translation[];
 }
 
 @Entity('book')
 export class Book {
-    @ObjectIdColumn() _id: ObjectId; // object id
+    @ObjectIdColumn()
+    _id: ObjectId;
 
-    @Column() b: string; //book name
+    @Column()
+    b: string;
 
-    @Column() p_count: number; // page count
+    @Column()
+    p_count: number;
 
-    @Column(() => Page) p: Page[]; // page with text array
+    @Column(() => Page)
+    p: Page[];
 
-    @Column() userId: string; // user id
+    @Column()
+    userId: string;
+
+    @Column({ nullable: true })
+    lastViewedPage?: number;
+
+    @Column({ nullable: true })
+    lastViewedPageSize?: number;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    lastUpdated: Date;
 }
