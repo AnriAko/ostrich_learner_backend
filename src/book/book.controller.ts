@@ -32,8 +32,19 @@ export class BookController {
     }
 
     @Get('user/:userId')
-    async findAllByUser(@Param('userId') userId: string) {
-        return this.bookService.findAllByUser(userId);
+    async findAllByUserPaginated(
+        @Param('userId') userId: string,
+        @Query('page') page: string = '1',
+        @Query('pageSize') pageSize: string = '15'
+    ) {
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const pageSizeNum = Math.min(50, parseInt(pageSize, 10) || 15); // ограничим максимум
+
+        return this.bookService.findAllByUserPaginated(
+            userId,
+            pageNum,
+            pageSizeNum
+        );
     }
 
     @Get(':id')

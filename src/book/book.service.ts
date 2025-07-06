@@ -42,6 +42,25 @@ export class BookService implements OnModuleDestroy {
             .sort({ lastUpdated: -1, _id: -1 })
             .toArray();
     }
+    async findAllByUserPaginated(
+        userId: string,
+        page: number = 1,
+        pageSize: number = 15
+    ): Promise<{ data: Omit<BookType, 'p'>[]; total: number }> {
+        const collection = this.getCollection();
+
+        const total = await collection.countDocuments({ userId });
+
+        const data = await collection
+            .find({ userId })
+            .project<Omit<BookType, 'p'>>({ p: 0 })
+            .sort({ lastUpdated: -1, _id: -1 })
+            .skip((page - 1) * pageSize)
+            .limit(pageSize)
+            .toArray();
+
+        return { data, total };
+    }
 
     async findPagesByBookId(
         id: string,
