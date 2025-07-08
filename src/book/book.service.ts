@@ -185,9 +185,7 @@ export class BookService implements OnModuleDestroy {
         userId: string,
         fileName?: string
     ): Promise<Omit<BookType, 'p'>> {
-        console.log(fileName);
         const cleanName = fileName ? path.parse(fileName).name : 'Untitled';
-        console.log(cleanName);
         const result = await this.runPdfProcessing(
             pdfBuffer,
             userId,
@@ -207,6 +205,14 @@ export class BookService implements OnModuleDestroy {
 
         const insertedId = match[1];
         const collection = this.getCollection();
+        await collection.updateOne(
+            { _id: new ObjectId(insertedId) },
+            {
+                $set: {
+                    lastRead: new Date(),
+                },
+            }
+        );
         const book = await collection.findOne(
             { _id: new ObjectId(insertedId) },
             { projection: { p: 0 } }
