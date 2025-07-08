@@ -9,11 +9,11 @@ import {
     Patch,
     Delete,
     Query,
+    Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BookService } from './book.service';
-import { Express } from 'express';
-import { UploadPdfDto } from './dto/upload-pdf.dto';
+import { Express, Request } from 'express';
 import { UpdateBookTitleDto } from './dto/update-book-title';
 
 @Controller('book')
@@ -24,11 +24,14 @@ export class BookController {
     @UseInterceptors(FileInterceptor('file'))
     async createSimple(
         @UploadedFile() file: Express.Multer.File,
-        @Body() createBookDto: UploadPdfDto
+        @Req() req: Request
     ) {
+        const { userId, fileName } = req.body;
+
         return this.bookService.createBookWithPdf(
             file.buffer,
-            createBookDto.userId
+            userId,
+            fileName
         );
     }
 

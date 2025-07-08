@@ -12,6 +12,7 @@ import { MongoClient, ObjectId, Collection } from 'mongodb';
 import { WordService } from 'src/word/word.service';
 import { BookType } from './types/book.type';
 import { PageType } from './types/page.type';
+import * as path from 'path';
 
 @Injectable()
 export class BookService implements OnModuleDestroy {
@@ -181,15 +182,20 @@ export class BookService implements OnModuleDestroy {
     /*-------------------Creation With Python Via uploading PDF-------------------*/
     async createBookWithPdf(
         pdfBuffer: Buffer,
-        userId: string
+        userId: string,
+        fileName?: string
     ): Promise<Omit<BookType, 'p'>> {
+        console.log(fileName);
+        const cleanName = fileName ? path.parse(fileName).name : 'Untitled';
+        console.log(cleanName);
         const result = await this.runPdfProcessing(
             pdfBuffer,
             userId,
             this.mongoUri,
             'pdf_to_json_stream.exe',
             this.dbName,
-            this.collectionName
+            this.collectionName,
+            cleanName
         );
 
         const match = result.output.match(/_id:\s*([a-f\d]{24})/i);
@@ -221,7 +227,8 @@ export class BookService implements OnModuleDestroy {
         mongoUri: string,
         exeFileName: string,
         dbName: string,
-        collectionName: string
+        collectionName: string,
+        fileNameWithoutExt?: string
     ): Promise<{ output: string }> {
         const exePath = join(
             process.cwd(),
@@ -233,11 +240,14 @@ export class BookService implements OnModuleDestroy {
         );
 
         return new Promise((resolve, reject) => {
-            const process = spawn(
-                exePath,
-                [userId, mongoUri, dbName, collectionName],
-                { stdio: ['pipe', 'pipe', 'pipe'] }
-            );
+            const args = [userId, mongoUri, dbName, collectionName];
+            if (fileNameWithoutExt) {
+                args.push(fileNameWithoutExt);
+            }
+
+            const process = spawn(exePath, args, {
+                stdio: ['pipe', 'pipe', 'pipe'],
+            });
 
             let output = '';
             let errorOutput = '';
