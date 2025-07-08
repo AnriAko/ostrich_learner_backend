@@ -74,8 +74,8 @@ export class BookService implements OnModuleDestroy {
         pageSize: number;
         pages: PageType[];
     }> {
-        if (pageSize > 10) {
-            throw new BadRequestException('pageSize cannot be greater than 10');
+        if (pageSize > 20) {
+            throw new BadRequestException('pageSize cannot be greater than 20');
         }
 
         const skip = (page - 1) * pageSize;
