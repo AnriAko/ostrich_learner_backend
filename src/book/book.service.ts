@@ -52,6 +52,9 @@ export class BookService implements OnModuleDestroy {
         const collection = this.getCollection();
 
         const total = await collection.countDocuments({ userId });
+        if (pageSize > 50) {
+            throw new BadRequestException('pageSize cannot be greater than 50');
+        }
 
         const data = await collection
             .find({ userId })
@@ -75,8 +78,8 @@ export class BookService implements OnModuleDestroy {
         pageSize: number;
         pages: PageType[];
     }> {
-        if (pageSize > 20) {
-            throw new BadRequestException('pageSize cannot be greater than 20');
+        if (pageSize > 10) {
+            throw new BadRequestException('pageSize cannot be greater than 10');
         }
 
         const skip = (page - 1) * pageSize;
