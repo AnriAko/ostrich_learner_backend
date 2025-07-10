@@ -78,6 +78,10 @@ export class BookService implements OnModuleDestroy {
         pageSize: number;
         pages: PageType[];
     }> {
+        console.log(
+            `[findPagesByBookId] Start: id=${id}, page=${page}, pageSize=${pageSize}`
+        );
+
         if (pageSize > 10) {
             throw new BadRequestException('pageSize cannot be greater than 10');
         }
@@ -96,7 +100,14 @@ export class BookService implements OnModuleDestroy {
             { projection }
         );
 
-        if (!book) throw new NotFoundException(`Book with id ${id} not found`);
+        if (!book) {
+            console.log(`[findPagesByBookId] Book not found for id=${id}`);
+            throw new NotFoundException(`Book with id ${id} not found`);
+        }
+
+        console.log(
+            `[findPagesByBookId] Book found: title=${book.b}, pages_raw_count=${book.p?.length || 0}`
+        );
 
         await collection.updateOne(
             { _id: new ObjectId(id) },
@@ -109,7 +120,14 @@ export class BookService implements OnModuleDestroy {
             }
         );
 
-        const pages = await this.lazyCleanupInvalidTranslations(book.p);
+        const pages = await this.lazyCleanupInvalidTranslations(book.p || []);
+
+        console.log(
+            `[findPagesByBookId] Pages after lazyCleanupInvalidTranslations:`
+        );
+        pages.forEach((pg, i) => {
+            console.log(`  Page ${i + 1}: tr count=${pg.tr?.length ?? 0}`);
+        });
 
         return {
             title: book.b,
@@ -123,22 +141,50 @@ export class BookService implements OnModuleDestroy {
     private async lazyCleanupInvalidTranslations(
         pages: PageType[]
     ): Promise<PageType[]> {
+        console.log(
+            `[lazyCleanupInvalidTranslations] Start with ${pages.length} pages`
+        );
+
         const allTranslationIds = pages.flatMap(
             (page) => page.tr?.map((tr) => tr.translation_id) ?? []
         );
+        console.log(
+            `[lazyCleanupInvalidTranslations] All translation IDs:`,
+            allTranslationIds
+        );
 
         const uniqueIds = [...new Set(allTranslationIds)];
+        console.log(
+            `[lazyCleanupInvalidTranslations] Unique translation IDs:`,
+            uniqueIds
+        );
 
         const existingWords = await this.wordService.findManyByIds(uniqueIds);
+        console.log(
+            `[lazyCleanupInvalidTranslations] Existing words count: ${existingWords.length}`
+        );
+        console.log(
+            `[lazyCleanupInvalidTranslations] Existing word IDs:`,
+            existingWords.map((w) => w.id)
+        );
+
         const validIds = new Set(existingWords.map((w) => w.id));
 
-        return pages.map((page) => {
+        const cleanedPages = pages.map((page, idx) => {
             if (!page.tr) return page;
             const filteredTranslations = page.tr.filter((tr) =>
                 validIds.has(tr.translation_id)
             );
+            if (filteredTranslations.length !== page.tr.length) {
+                console.log(
+                    `[lazyCleanupInvalidTranslations] Page ${idx + 1} filtered ${page.tr.length - filteredTranslations.length} invalid translations`
+                );
+            }
             return { ...page, tr: filteredTranslations };
         });
+
+        console.log(`[lazyCleanupInvalidTranslations] Completed cleanup`);
+        return cleanedPages;
     }
 
     async updateBookTitle(id: string, _userId: string, newTitle: string) {
