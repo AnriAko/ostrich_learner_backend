@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { ObjectId } from 'mongodb';
 import { BookService } from 'src/book/book.service';
 import { WordService } from 'src/word/word.service';
@@ -23,9 +27,25 @@ export class BookTranslationService {
         // Step 1: Add word to SQL
         const word = await this.wordService.create(createWordDto);
 
-        // Step 2: Add translation to MongoDB page
+        if (!word || !word.id) {
+            throw new InternalServerErrorException('Failed to create word');
+        }
+
+        // Step 2: Ensure page exists
         const collection = this.bookService.getCollection();
 
+        const book = await collection.findOne(
+            { _id: new ObjectId(bookId) },
+            { projection: { [`p.${pageIndex}`]: 1 } }
+        );
+
+        if (!book?.p || !book.p[pageIndex]) {
+            throw new NotFoundException(
+                `Page with index ${pageIndex} not found in book`
+            );
+        }
+
+        // Step 3: Push translation to that page
         const updateResult = await collection.updateOne(
             { _id: new ObjectId(bookId) },
             {
@@ -43,7 +63,9 @@ export class BookTranslationService {
         );
 
         if (updateResult.modifiedCount === 0) {
-            throw new NotFoundException(`Book or page not found`);
+            throw new NotFoundException(
+                `Book or page not found or not modified`
+            );
         }
 
         return word;
@@ -55,12 +77,9 @@ export class BookTranslationService {
     ): Promise<{ deleted: boolean }> {
         const { pageIndex, translationId } = dto;
 
-        // Step 1: Delete from SQL
         await this.wordService.remove(translationId);
 
-        // Step 2: Delete from MongoDB
         const collection = this.bookService.getCollection();
-
         const pullQuery: Record<string, any> = {};
         pullQuery[`p.${pageIndex}.tr`] = { translation_id: translationId };
 
