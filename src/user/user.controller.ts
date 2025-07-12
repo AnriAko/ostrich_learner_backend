@@ -1,10 +1,18 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Param,
+    Delete,
+    Patch,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FullUserProfileDto } from './dto/full-user-profile.dto';
-//change it later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import { UpdateNicknameDto } from './dto/update-nickname.dto';
+
 @ApiTags('User')
 @Controller('user')
 export class UserController {
@@ -44,19 +52,19 @@ export class UserController {
         return this.userService.getFullProfileById(id);
     }
 
-    // @ApiOperation({ summary: 'Update user data' })
-    // @ApiResponse({ status: 200, description: 'The user was updated.' })
-    // @ApiResponse({ status: 400, description: 'Invalid data provided.' })
-    // @Patch(':id')
-    // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    //     return this.userService.update(id, updateUserDto);
-    // }
+    @ApiOperation({ summary: 'Update user nickname' })
+    @ApiResponse({ status: 200, description: 'Nickname updated successfully.' })
+    @ApiResponse({ status: 404, description: 'User not found.' })
+    @Patch(':id/nickname')
+    updateNickname(@Param('id') id: string, @Body() dto: UpdateNicknameDto) {
+        return this.userService.updateNickname(id, dto);
+    }
 
     @ApiOperation({ summary: 'Delete a user by ID' })
     @ApiResponse({ status: 200, description: 'The user was deleted.' })
     @ApiResponse({ status: 404, description: 'User not found.' })
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.userService.remove(id);
+    delete(@Param('id') userId: string) {
+        return this.userService.delete(userId);
     }
 }

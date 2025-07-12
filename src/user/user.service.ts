@@ -3,11 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
 import { UserConfigService } from 'src/user-config/user-config.service';
 import { FullUserProfileDto } from './dto/full-user-profile.dto';
+import { UpdateNicknameDto } from './dto/update-nickname.dto';
 
-// Possibly change later
 @Injectable()
 export class UserService {
     constructor(
@@ -53,15 +52,28 @@ export class UserService {
         return { id: user.id, nickname: user.config.nickname };
     }
 
-    // async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    //     const user = await this.findOne(id);
-    //     Object.assign(user, updateUserDto);
-    //     return this.userRepository.save(user);
-    // }
+    async updateNickname(
+        userId: string,
+        dto: UpdateNicknameDto
+    ): Promise<{ id: string; nickname: string }> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['config'],
+        });
 
-    async remove(id: string): Promise<void> {
-        await this.findOne(id);
-        await this.userRepository.delete(id);
+        if (!user || !user.config) {
+            throw new NotFoundException('User or user config not found');
+        }
+
+        user.config.nickname = dto.nickname;
+        await this.userConfigService.updateNickname(userId, dto.nickname);
+
+        return { id: user.id, nickname: user.config.nickname };
+    }
+
+    async delete(userId: string): Promise<void> {
+        await this.findOne(userId);
+        await this.userRepository.delete(userId);
     }
     async getFullProfileById(userId: string): Promise<FullUserProfileDto> {
         const user = await this.userRepository.findOne({

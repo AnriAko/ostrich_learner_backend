@@ -102,13 +102,6 @@ export class WordController {
         return this.wordService.findByUser(userId, +page, +pageSize);
     }
 
-    @Get('/user/:userId/learning-stats')
-    @ApiOperation({ summary: 'Get daily learning stats for user (calendar)' })
-    @ApiParam({ name: 'userId', type: 'string' })
-    getUserLearningStats(@Param('userId') userId: string) {
-        return this.wordService.getLearningStatsByDay(userId);
-    }
-
     @Get('/available-for-learning/:userId')
     @ApiOperation({ summary: 'Get words available for learning for user' })
     @ApiParam({ name: 'userId', type: 'string' })
@@ -146,5 +139,25 @@ export class WordController {
     @ApiParam({ name: 'id', type: Number })
     findOne(@Param('id') id: number) {
         return this.wordService.findOne(id);
+    }
+
+    @Get('/learned-monthly/all/:userId')
+    @ApiOperation({
+        summary:
+            'Get learned words count grouped by day (month) for all vocabularies of a user',
+    })
+    @ApiParam({ name: 'userId', type: 'string' })
+    @ApiQuery({ name: 'year', required: true, type: Number })
+    @ApiQuery({ name: 'month', required: true, type: Number })
+    getLearnedByMonthForUser(
+        @Param('userId') userId: string,
+        @Query('year') year: number,
+        @Query('month') month: number
+    ) {
+        return this.wordService.getLearnedWordsCountByMonthForUser(
+            userId,
+            year,
+            month
+        );
     }
 }

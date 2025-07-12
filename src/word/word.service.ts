@@ -131,33 +131,35 @@ export class WordService {
             vocabularyName: word.vocabulary.name,
         }));
     }
-
-    async getAllLearnedWordsByMonth(
-        vocabularyId: string,
+    async getLearnedWordsCountByMonthForUser(
+        userId: string,
         year: number,
         month: number
-    ): Promise<Record<string, Word[]>> {
+    ): Promise<{ date: string; count: number }[]> {
         const start = new Date(year, month - 1, 1);
-        const end = new Date(year, month, 0);
+        const end = new Date(year, month, 0, 23, 59, 59, 999);
 
-        const words = await this.wordRepo.find({
-            where: {
-                vocabulary: { id: vocabularyId },
-                learningDate: Between(start, end),
-                memoryScore: MoreThan(0),
-            },
-            order: { learningDate: 'ASC' },
-        });
+        const words = await this.wordRepo
+            .createQueryBuilder('word')
+            .innerJoin('word.vocabulary', 'vocabulary')
+            .innerJoin('vocabulary.user', 'user')
+            .where('user.id = :userId', { userId })
+            .andWhere('word.memoryScore > 0')
+            .andWhere('word.learningDate BETWEEN :start AND :end', {
+                start,
+                end,
+            })
+            .getMany();
 
-        const grouped: Record<string, Word[]> = {};
+        const grouped: Record<string, number> = {};
         for (const word of words) {
-            const day =
-                word.learningDate?.toISOString().split('T')[0] ?? 'No date';
-            grouped[day] = grouped[day] || [];
-            grouped[day].push(word);
+            const date = word.learningDate?.toISOString().split('T')[0];
+            if (date) grouped[date] = (grouped[date] || 0) + 1;
         }
 
-        return grouped;
+        return Object.entries(grouped)
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => a.date.localeCompare(b.date));
     }
 
     async findByUser(userId: string, page = 1, pageSize = 20): Promise<Word[]> {
@@ -184,29 +186,6 @@ export class WordService {
         });
     }
 
-    async getLearningStatsByDay(
-        userId: string
-    ): Promise<{ date: string; count: number }[]> {
-        const words = await this.wordRepo
-            .createQueryBuilder('word')
-            .innerJoin('word.vocabulary', 'vocabulary')
-            .innerJoin('vocabulary.user', 'user')
-            .where('user.id = :userId', { userId })
-            .andWhere('word.memoryScore > 0')
-            .andWhere('word.learningDate IS NOT NULL')
-            .getMany();
-
-        const grouped: Record<string, number> = {};
-        for (const word of words) {
-            const date = word.learningDate?.toISOString().split('T')[0];
-            if (date) grouped[date] = (grouped[date] || 0) + 1;
-        }
-
-        return Object.entries(grouped).map(([date, count]) => ({
-            date,
-            count,
-        }));
-    }
     async findManyByIds(ids: number[]): Promise<Word[]> {
         if (!ids.length) return [];
         return this.wordRepo.find({
